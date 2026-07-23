@@ -179,6 +179,66 @@ const FIXTURE_APERTURA_2026 = Object.freeze([
   ]}
 ]);
 
+// Programación oficial publicada por la LPF para las fechas 1, 2 y 3
+// del Torneo Clausura 2026. Las fechas posteriores permanecen pendientes
+// hasta que la Liga confirme día y horario.
+const PROGRAMACION_CLAUSURA_2026 = Object.freeze({
+  'Belgrano|Rosario Central': ['23/07/2026', '19:30'],
+  'Sarmiento|Argentinos Juniors': ['23/07/2026', '19:30'],
+  'Defensa y Justicia|Aldosivi': ['23/07/2026', '21:45'],
+  'Gimnasia de Mendoza|Central Córdoba': ['24/07/2026', '16:45'],
+  'Racing Club|Gimnasia de La Plata': ['24/07/2026', '19:00'],
+  'Vélez Sarsfield|Instituto': ['24/07/2026', '19:00'],
+  'Huracán|Banfield': ['24/07/2026', '21:15'],
+  'Platense|Unión': ['24/07/2026', '21:15'],
+  'Estudiantes de Río Cuarto|Tigre': ['25/07/2026', '14:45'],
+  "Newell's Old Boys|Talleres": ['25/07/2026', '17:00'],
+  'River Plate|Barracas Central': ['25/07/2026', '19:15'],
+  'Lanús|San Lorenzo': ['25/07/2026', '21:30'],
+  'Atlético Tucumán|Independiente Rivadavia': ['26/07/2026', '15:00'],
+  'Estudiantes de La Plata|Independiente': ['26/07/2026', '17:15'],
+  'Deportivo Riestra|Boca Juniors': ['26/07/2026', '19:30'],
+
+  'San Lorenzo|Gimnasia de Mendoza': ['28/07/2026', '19:00'],
+  'Banfield|Sarmiento': ['28/07/2026', '19:00'],
+  'Argentinos Juniors|Estudiantes de Río Cuarto': ['28/07/2026', '21:15'],
+  'Rosario Central|Racing Club': ['28/07/2026', '21:15'],
+  'Barracas Central|Aldosivi': ['29/07/2026', '14:30'],
+  'Defensa y Justicia|Deportivo Riestra': ['29/07/2026', '17:00'],
+  'Gimnasia de La Plata|River Plate': ['29/07/2026', '19:15'],
+  'Instituto|Platense': ['29/07/2026', '21:30'],
+  'Independiente Rivadavia|Huracán': ['30/07/2026', '19:00'],
+  'Talleres|Vélez Sarsfield': ['30/07/2026', '19:00'],
+  "Independiente|Newell's Old Boys": ['30/07/2026', '21:15'],
+  'Central Córdoba|Atlético Tucumán': ['30/07/2026', '21:15'],
+  'Boca Juniors|Estudiantes de La Plata': ['05/08/2026', '19:00'],
+  'Tigre|Belgrano': ['05/08/2026', '21:15'],
+  'Unión|Lanús': ['06/08/2026', '19:00'],
+
+  'Gimnasia de Mendoza|Unión': ['01/08/2026', '15:30'],
+  'Estudiantes de Río Cuarto|Banfield': ['01/08/2026', '15:30'],
+  'Belgrano|Argentinos Juniors': ['01/08/2026', '18:00'],
+  'Estudiantes de La Plata|Defensa y Justicia': ['01/08/2026', '18:00'],
+  'Racing Club|Tigre': ['01/08/2026', '20:30'],
+  'Deportivo Riestra|Barracas Central': ['02/08/2026', '14:30'],
+  'Aldosivi|Gimnasia de La Plata': ['02/08/2026', '14:30'],
+  "Newell's Old Boys|Boca Juniors": ['02/08/2026', '17:00'],
+  'River Plate|Rosario Central': ['02/08/2026', '19:15'],
+  'Lanús|Instituto': ['02/08/2026', '21:30'],
+  'Sarmiento|Independiente Rivadavia': ['03/08/2026', '16:45'],
+  'Platense|Talleres': ['03/08/2026', '19:00'],
+  'Vélez Sarsfield|Independiente': ['03/08/2026', '19:00'],
+  'Central Córdoba|San Lorenzo': ['03/08/2026', '21:15'],
+  'Huracán|Atlético Tucumán': ['03/08/2026', '21:15']
+});
+
+const FIXTURE_CLAUSURA_2026 = Object.freeze(
+  FIXTURE_APERTURA_2026.map(round => Object.freeze({
+    date: '',
+    matches: Object.freeze(round.matches.map(([home, away]) => Object.freeze([away, home])))
+  }))
+);
+
 function buildKickoffFromDateAndTime(dateText, timeText) {
   const [day, month, year] = String(dateText || '').split('/').map(Number);
   const time = String(timeText || '').trim();
@@ -195,23 +255,23 @@ function getTeamZone(team) {
 
 function buildDefaultMatches() {
   let matchId = 1;
-  return FIXTURE_APERTURA_2026.flatMap((round, roundIndex) =>
+  return FIXTURE_CLAUSURA_2026.flatMap((round, roundIndex) =>
     round.matches.map(([home, away]) => {
       const homeZone = getTeamZone(home);
       const awayZone = getTeamZone(away);
       const phase = homeZone === awayZone ? `Zona ${homeZone}` : 'Interzonal';
-      const time = '18:00';
+      const [date = '', time = ''] = PROGRAMACION_CLAUSURA_2026[`${home}|${away}`] || [];
       return {
         id: matchId++,
-        date: round.date,
+        date,
         time,
-        timeConfirmed: false,
+        timeConfirmed: Boolean(date && time),
         group: `Fecha ${roundIndex + 1} - ${phase}`,
         home,
         away,
         homeGoals: '',
         awayGoals: '',
-        kickoff: buildKickoffFromDateAndTime(round.date, time)
+        kickoff: buildKickoffFromDateAndTime(date, time)
       };
     })
   );
@@ -220,4 +280,6 @@ function buildDefaultMatches() {
 window.ZONAS_LIGA_AFA = ZONAS_LIGA_AFA;
 window.EQUIPOS_LIGA_AFA = EQUIPOS_LIGA_AFA;
 window.FIXTURE_APERTURA_2026 = FIXTURE_APERTURA_2026;
+window.FIXTURE_CLAUSURA_2026 = FIXTURE_CLAUSURA_2026;
+window.PROGRAMACION_CLAUSURA_2026 = PROGRAMACION_CLAUSURA_2026;
 window.buildDefaultMatches = buildDefaultMatches;
