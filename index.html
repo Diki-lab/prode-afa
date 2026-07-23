@@ -869,6 +869,35 @@
       flex-wrap: wrap;
     }
 
+    #predictionsTable th,
+    #predictionsTable td {
+      padding-left: 8px;
+      padding-right: 8px;
+    }
+
+    #predictionsTable th:last-child,
+    #predictionsTable td:last-child {
+      width: 112px;
+      min-width: 112px;
+    }
+
+    #predictionsTable .prediction-actions {
+      width: 92px;
+      flex-direction: column;
+      align-items: stretch;
+      flex-wrap: nowrap;
+      gap: 6px;
+    }
+
+    #predictionsTable .prediction-save-button,
+    #predictionsTable .prediction-view-button {
+      width: 92px;
+      min-width: 92px;
+      min-height: 38px;
+      padding: 8px 10px;
+      font-size: 13px;
+    }
+
     .prediction-view-button {
       min-height: 34px;
       padding: 7px 10px;
@@ -2315,7 +2344,7 @@
             <input id="predictionSearchMatch" oninput="renderPredictions()" placeholder="Ej: Boca, River..." />
           </div>
         </div>
-        <table>
+        <table id="predictionsTable">
           <thead id="predictionsHead">
             <tr>
               <th>Jugador</th>
@@ -4201,7 +4230,14 @@
     function compareFixtureMatches(a, b) {
       const dateA = parseFixtureDate(a.date);
       const dateB = parseFixtureDate(b.date);
-      return (dateA && dateB ? dateA - dateB : 0) || a.id - b.id;
+      const dateOrder = dateA && dateB
+        ? dateA - dateB
+        : dateA ? -1 : dateB ? 1 : 0;
+      const getTimeInMinutes = match => {
+        const parts = String(match?.time || '').match(/^(\d{1,2}):(\d{2})$/);
+        return parts ? Number(parts[1]) * 60 + Number(parts[2]) : Number.MAX_SAFE_INTEGER;
+      };
+      return dateOrder || getTimeInMinutes(a) - getTimeInMinutes(b) || a.id - b.id;
     }
 
     function getPredictionStageName(match) {
@@ -4668,7 +4704,7 @@
         return (!filters.date || matchDate === filters.date)
           && (!filters.group || matchGroup === filters.group)
           && (!filters.query || matchText.includes(filters.query));
-      });
+      }).sort(compareFixtureMatches);
     }
 
     function filterPredictionRowsByCurrentFilters(sourcePredictions) {
@@ -4895,6 +4931,7 @@
 
       const rows = filteredMatches.map(match => ({ match, prediction: getPredictionForMatch(match, predictions) }));
 
+      let previousHeaderTitle = '';
       document.getElementById('predictionsBody').innerHTML = rows.map(row => {
         const { match, prediction } = row;
         const home = prediction ? prediction.home : '';
@@ -4925,7 +4962,13 @@
           rowAction += `<button class="secondary-action prediction-view-button" title="Ver pronósticos del partido" onclick="openMatchPredictionsModal(${match.id})">Ver</button>`;
         }
 
-        return `
+        const headerTitle = getFixtureHeaderTitle(match);
+        const dateHeader = headerTitle !== previousHeaderTitle
+          ? `<tr class="fixture-date-row"><td colspan="7"><span class="fixture-date-title">${escapeHtml(headerTitle)}</span></td></tr>`
+          : '';
+        previousHeaderTitle = headerTitle;
+
+        return `${dateHeader}
           <tr>
             <td><div class="prediction-date-time">
               <strong>${escapeHtml(getPredictionDateFilterLabel(match))}</strong>
