@@ -683,6 +683,61 @@
       border-radius: 12px;
     }
 
+    .prediction-outcome {
+      display: inline-flex;
+      gap: 4px;
+      white-space: nowrap;
+    }
+
+    button.prediction-outcome-button {
+      width: 32px;
+      min-height: 32px;
+      padding: 4px;
+      border-radius: 9px;
+      background: var(--surface-soft);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      box-shadow: none;
+    }
+
+    button.prediction-outcome-button.outcome-local.active {
+      background: #35a853;
+      color: #ffffff;
+      border-color: #25823d;
+    }
+
+    button.prediction-outcome-button.outcome-draw.active {
+      background: #f0a437;
+      color: #231600;
+      border-color: #cf8120;
+    }
+
+    button.prediction-outcome-button.outcome-visitor.active {
+      background: #d84a4a;
+      color: #ffffff;
+      border-color: #b92f2f;
+    }
+
+    button.prediction-outcome-button:disabled {
+      opacity: 1;
+    }
+
+    .real-outcome-badge {
+      width: 36px;
+      height: 36px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 10px;
+      font-weight: 1000;
+      border: 1px solid var(--border);
+      background: var(--surface-soft);
+      color: var(--muted);
+    }
+
+    .real-outcome-badge.local { background: #dff5e7; color: #087443; border-color: #9bd4b3; }
+    .real-outcome-badge.draw { background: #fff0d8; color: #9a5b00; border-color: #efc477; }
+    .real-outcome-badge.visitor { background: #e3edff; color: #174ea6; border-color: #a9c3f5; }
+
     .group-badge {
       display: inline-block;
       background: var(--success-soft);
@@ -1136,6 +1191,9 @@
     .recent-form-mark.win { background: #35a853; }
     .recent-form-mark.draw { background: #f0a437; }
     .recent-form-mark.loss { background: #d84a4a; }
+    .recent-form-mark.pending { background: #263754; color: #aebbd2; }
+    .prediction-team-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+    .prediction-team-cell .recent-form { margin-left: 34px; }
 
     .home-hero {
       margin-bottom: 18px;
@@ -2139,6 +2197,7 @@
               <th>Local</th>
               <th>GL</th>
               <th>GV</th>
+              <th>Estado real</th>
               <th>Visitante</th>
             </tr>
           </thead>
@@ -2260,7 +2319,7 @@
     <section id="ranking" class="tab hidden">
       <div class="card">
         <h2>🏅 Ranking</h2>
-        <p class="muted">Puntos: resultado exacto = 3, ganador/empate correcto = 1.</p>
+        <p class="muted">Puntos: 1 punto por acertar Local, Empate o Visitante.</p>
       </div>
       <div class="card table-wrap">
         <table>
@@ -2423,16 +2482,15 @@
 
         <div class="rules-section">
           <h3>Cómo jugar</h3>
-          <p>Para participar se deben cargar los goles del equipo local y del visitante. No es obligatorio completar todos los partidos de una vez: cada pronóstico puede guardarse por separado.</p>
+          <p>Para participar elegí L si gana el local, E si empatan o V si gana el visitante. No es obligatorio completar todos los partidos de una vez: cada pronóstico puede guardarse por separado.</p>
         </div>
 
         <div class="rules-section">
           <h3>Puntajes</h3>
           <p>El ranking se calcula automáticamente cuando el administrador carga el resultado oficial:</p>
           <ul class="rules-list">
-            <li><strong>3 puntos</strong> por acertar el marcador exacto.</li>
-            <li><strong>1 punto</strong> por acertar el ganador o el empate, pero no el marcador exacto.</li>
-            <li><strong>0 puntos</strong> cuando no se acierta el ganador ni el empate.</li>
+            <li><strong>1 punto</strong> por acertar L, E o V.</li>
+            <li><strong>0 puntos</strong> cuando no se acierta el resultado.</li>
           </ul>
         </div>
 
@@ -2476,8 +2534,9 @@
 
   <script>
     window.CONFIG_TORNEO = Object.freeze({
-      id: 'liga_afa',
-      year: '2026'
+      id: 'liga_afa_clausura',
+      year: '2026',
+      predictionTestMode: false
     });
   </script>
 
@@ -2727,15 +2786,21 @@
       const hasOfficialTeams = normalizedMatches.every(match =>
         officialTeams.has(match?.home) && officialTeams.has(match?.away)
       );
+      const hasClausuraPairings = defaultMatches.every(expected => {
+        const current = normalizedMatches.find(match => Number(match?.id) === expected.id);
+        return current?.home === expected.home && current?.away === expected.away;
+      });
       const hasCompleteFixture = normalizedMatches.length === defaultMatches.length
         && [...requiredIds].every(id => availableIds.has(id))
-        && hasOfficialTeams;
+        && hasOfficialTeams
+        && hasClausuraPairings;
 
       if (!hasCompleteFixture) {
-        console.warn('Fixture incompleto o desactualizado. Restableciendo el Apertura LPF 2026.', {
+        console.warn('Fixture incompleto o desactualizado. Restableciendo el Clausura LPF 2026.', {
           length: normalizedMatches.length,
           expectedLength: defaultMatches.length,
-          hasOfficialTeams
+          hasOfficialTeams,
+          hasClausuraPairings
         });
         return applyOfficialMatchTimes(defaultMatches);
       }
@@ -3113,16 +3178,22 @@
       return matchStart <= now;
     }
 
+    function isMatchScheduleConfirmed(match) {
+      return Boolean(match?.date && match?.time && match?.timeConfirmed !== false);
+    }
+
     function isPredictionEditableForMatch(match, now = new Date()) {
       return !arePredictionsLocked
         && !isMatchStatusClosed(match)
-        && !hasMatchStarted(match, now);
+        && isMatchScheduleConfirmed(match)
+        && (CONFIG_TORNEO.predictionTestMode || !hasMatchStarted(match, now));
     }
 
     function getPredictionBlockedReason(match) {
       if (arePredictionsLocked) return 'Cerrado';
       if (isMatchStatusClosed(match)) return 'Partido cerrado';
-      if (hasMatchStarted(match)) return 'Partido iniciado';
+      if (!isMatchScheduleConfirmed(match)) return 'Programación pendiente';
+      if (!CONFIG_TORNEO.predictionTestMode && hasMatchStarted(match)) return 'Partido iniciado';
       return '';
     }
 
@@ -3724,8 +3795,12 @@
         console.log(`☁️ Cargando datos desde Firestore: ${PRODE_FIRESTORE_PATH}`);
         const cloudData = await window.prodeFirebase.loadData();
         if (cloudData) {
+          let fixtureWasMigrated = false;
           if (Array.isArray(cloudData.players)) players = cloudData.players;
           if (Array.isArray(cloudData.matches)) {
+            fixtureWasMigrated = cloudData.matches.some((match, index) =>
+              match?.home !== defaultMatches[index]?.home || match?.away !== defaultMatches[index]?.away
+            );
             matches = resolveMatchesData(cloudData.matches);
           }
           const legacyPredictions = normalizePredictionList(cloudData.predictions);
@@ -3765,7 +3840,7 @@
           localStorage.setItem(STORAGE_KEYS.predictionLock, JSON.stringify(arePredictionsLocked));
           localStorage.setItem(STORAGE_KEYS.playoffResults, JSON.stringify(playoffResults));
           localStorage.setItem(STORAGE_KEYS.playoffSeeds, JSON.stringify(playoffSeeds));
-          if (addedCurrentPlayer && isAdmin) {
+          if ((addedCurrentPlayer || fixtureWasMigrated) && isAdmin) {
             await window.prodeFirebase.saveData({
               players,
               matches,
@@ -4189,6 +4264,16 @@
       renderAll();
     }
 
+    function renderRealMatchOutcome(match) {
+      const outcome = getPredictionOutcome(match?.homeGoals, match?.awayGoals);
+      if (!outcome) {
+        return '<span class="real-outcome-badge" title="Resultado pendiente">—</span>';
+      }
+      const cssClass = outcome === 'L' ? 'local' : outcome === 'E' ? 'draw' : 'visitor';
+      const label = outcome === 'L' ? 'Ganó el local' : outcome === 'E' ? 'Empate' : 'Ganó el visitante';
+      return `<span class="real-outcome-badge ${cssClass}" title="${label}" aria-label="${label}">${outcome}</span>`;
+    }
+
     function renderFixture() {
       renderDates();
       renderGroups();
@@ -4207,7 +4292,7 @@
         .map(match => {
           const headerTitle = getFixtureHeaderTitle(match);
           const headerRow = headerTitle !== previousHeader
-            ? `<tr class="fixture-date-row"><td colspan="7"><span class="fixture-date-title">${escapeHtml(headerTitle)}</span></td></tr>`
+            ? `<tr class="fixture-date-row"><td colspan="8"><span class="fixture-date-title">${escapeHtml(headerTitle)}</span></td></tr>`
             : '';
           previousHeader = headerTitle;
 
@@ -4220,6 +4305,7 @@
               <td>${renderTeam(match.home)}</td>
               <td><input class="score-input" type="number" min="0" value="${escapeHtml(match.homeGoals)}" ${(!isAdmin || isResultLocked) ? 'disabled' : ''} onchange="updateResult(${match.id}, 'homeGoals', this.value)"></td>
               <td><input class="score-input" type="number" min="0" value="${escapeHtml(match.awayGoals)}" ${(!isAdmin || isResultLocked) ? 'disabled' : ''} onchange="updateResult(${match.id}, 'awayGoals', this.value)"></td>
+              <td>${renderRealMatchOutcome(match)}</td>
               <td>${renderTeam(match.away)}</td>
             </tr>
           `;
@@ -4335,9 +4421,10 @@
       const awayRaw = awayInput?.value ?? '';
       const home = Number(homeRaw);
       const away = Number(awayRaw);
+      const outcome = getPredictionOutcome(homeRaw, awayRaw);
 
-      if (!player || homeRaw === '' || awayRaw === '' || Number.isNaN(home) || Number.isNaN(away) || home < 0 || away < 0) {
-        setPredictionStatus('Completa GL y GV con numeros validos.', true);
+      if (!player || !outcome) {
+        setPredictionStatus('Elegí L, E o V antes de guardar.', true);
         return;
       }
 
@@ -4345,8 +4432,9 @@
       if (existing) {
         existing.home = home;
         existing.away = away;
+        existing.outcome = outcome;
       } else {
-        predictions.push({ player, matchId, home, away });
+        predictions.push({ player, matchId, home, away, outcome });
       }
 
       localStorage.setItem(STORAGE_KEYS.predictions, JSON.stringify(predictions));
@@ -4376,8 +4464,9 @@
       const realHome = Number(match.homeGoals);
       const realAway = Number(match.awayGoals);
 
-      if (prediction.home === realHome && prediction.away === realAway) return 3;
-      return Math.sign(prediction.home - prediction.away) === Math.sign(realHome - realAway) ? 1 : 0;
+      const predictedOutcome = prediction.outcome || getPredictionOutcome(prediction.home, prediction.away);
+      const realOutcome = getPredictionOutcome(realHome, realAway);
+      return predictedOutcome && predictedOutcome === realOutcome ? 1 : 0;
     }
 
     function renderPredictionsLegacy() {
@@ -4613,6 +4702,49 @@
       if (progress) progress.innerText = '';
     }
 
+    function getPredictionOutcome(home, away) {
+      if (home === '' || away === '' || home === null || away === null) return '';
+      const homeGoals = Number(home);
+      const awayGoals = Number(away);
+      if (!Number.isFinite(homeGoals) || !Number.isFinite(awayGoals)) return '';
+      return homeGoals > awayGoals ? 'L' : homeGoals < awayGoals ? 'V' : 'E';
+    }
+
+    function renderPredictionOutcomeButtons(matchId, outcome, editable) {
+      return `<div class="prediction-outcome" data-prediction-outcome="${matchId}" aria-label="Resultado pronosticado">
+        ${['L', 'E', 'V'].map(value => {
+          const colorClass = value === 'L' ? 'outcome-local' : value === 'E' ? 'outcome-draw' : 'outcome-visitor';
+          return `<button type="button" class="prediction-outcome-button ${colorClass} ${outcome === value ? 'active' : ''}" ${editable ? `onclick="selectPredictionOutcome(${matchId}, '${value}')"` : 'disabled'} aria-pressed="${outcome === value}">${value}</button>`;
+        }).join('')}
+      </div>`;
+    }
+
+    function updatePredictionOutcomeButtons(matchId) {
+      const homeInput = document.getElementById(`predictionHome-${matchId}`);
+      const awayInput = document.getElementById(`predictionAway-${matchId}`);
+      const container = document.querySelector(`[data-prediction-outcome="${matchId}"]`);
+      if (!homeInput || !awayInput || !container) return;
+      const outcome = getPredictionOutcome(homeInput.value, awayInput.value);
+      container.querySelectorAll('.prediction-outcome-button').forEach(button => {
+        const active = button.textContent.trim() === outcome;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
+    }
+
+    function selectPredictionOutcome(matchId, outcome) {
+      const homeInput = document.getElementById(`predictionHome-${matchId}`);
+      const awayInput = document.getElementById(`predictionAway-${matchId}`);
+      if (!homeInput || !awayInput) return;
+      const currentOutcome = getPredictionOutcome(homeInput.value, awayInput.value);
+      if (currentOutcome !== outcome) {
+        const defaults = outcome === 'L' ? [1, 0] : outcome === 'V' ? [0, 1] : [0, 0];
+        homeInput.value = defaults[0];
+        awayInput.value = defaults[1];
+      }
+      updatePredictionOutcomeButtons(matchId);
+    }
+
     function renderPredictions() {
       renderPredictionFilters();
       const filteredMatches = getFilteredPredictionMatches();
@@ -4624,8 +4756,7 @@
             <th>Fecha/Fase</th>
             <th>Grupo/Fase</th>
             <th>Local</th>
-            <th>GL</th>
-            <th>GV</th>
+            <th>Estado</th>
             <th>Visitante</th>
             <th>Puntos</th>
             <th>Guardar/Accion</th>
@@ -4646,12 +4777,11 @@
         const canEdit = isPredictionEditableForMatch(match);
         const showInputs = canEdit && isEditing;
         const canViewDetails = canViewConsolidatedPredictionsForMatch(match);
-        const homeCell = showInputs
-          ? `<input id="predictionHome-${match.id}" data-prediction-row-input class="score-input" type="number" min="0" value="${escapeHtml(home)}">`
-          : escapeHtml(home);
-        const awayCell = showInputs
-          ? `<input id="predictionAway-${match.id}" data-prediction-row-input class="score-input" type="number" min="0" value="${escapeHtml(away)}">`
-          : escapeHtml(away);
+        const outcomeButtons = `
+          <input id="predictionHome-${match.id}" data-prediction-row-input type="hidden" value="${escapeHtml(home)}">
+          <input id="predictionAway-${match.id}" data-prediction-row-input type="hidden" value="${escapeHtml(away)}">
+          ${renderPredictionOutcomeButtons(match.id, getPredictionOutcome(home, away), showInputs)}
+        `;
         let rowAction = '';
 
         if (showInputs) {
@@ -4673,8 +4803,7 @@
             <td>${escapeHtml(getPredictionDateFilterLabel(match))}</td>
             <td><span class="group-badge">${escapeHtml(getPredictionGroupPhaseName(match))}</span></td>
             <td>${renderTeam(match.home)}</td>
-            <td>${homeCell}</td>
-            <td>${awayCell}</td>
+            <td>${outcomeButtons}</td>
             <td>${renderTeam(match.away)}</td>
             <td><span class="points-badge">${points}</span></td>
             <td><div class="prediction-actions">${rowAction}</div></td>
@@ -4866,9 +4995,12 @@
         });
     }
 
-    function renderRecentTeamForm(team) {
+    function renderRecentTeamForm(team, showPlaceholders = false) {
       const form = getRecentTeamForm(team);
-      if (!form.length) return '';
+      if (!form.length) {
+        if (!showPlaceholders) return '';
+        return `<span class="recent-form" aria-label="Sin resultados recientes" title="Sin resultados recientes">${'<span class="recent-form-mark pending">-</span>'.repeat(5)}</span>`;
+      }
       return `<span class="recent-form" aria-label="Últimos resultados">${form.map(item => {
         const cssClass = item.result === 'G' ? 'win' : item.result === 'E' ? 'draw' : 'loss';
         return `<span class="recent-form-mark ${cssClass}" title="${escapeHtml(item.title)}">${item.result}</span>`;
@@ -4977,13 +5109,13 @@
           const prediction = source.find(item => item.matchId === match.id);
           return `<tr>
             <td>#${match.id}</td>
-            <td>${renderTeam(match.home)}</td>
+            <td><div class="prediction-team-cell">${renderTeam(match.home)}${renderRecentTeamForm(match.home)}</div></td>
             <td><div class="score-inputs">
               <input type="number" min="0" max="99" id="cont-home-${match.id}" value="${prediction?.home ?? ''}" aria-label="Goles local">
               <span>-</span>
               <input type="number" min="0" max="99" id="cont-away-${match.id}" value="${prediction?.away ?? ''}" aria-label="Goles visitante">
             </div></td>
-            <td>${renderTeam(match.away)}</td>
+            <td><div class="prediction-team-cell">${renderTeam(match.away)}${renderRecentTeamForm(match.away)}</div></td>
             <td>${getPredictionBlockedReason(match) || 'Disponible'}</td>
           </tr>`;
         }).join('');
@@ -5278,10 +5410,10 @@
         return `<tr>
           <td>#${match.id}</td>
           <td>${escapeHtml(PLAYOFF_STAGE_LABELS[match.stage])}</td>
-          <td>${renderTeam(match.home)}</td>
+            <td>${renderTeam(match.home)}</td>
           <td>${input('homeGoals', match.homeGoals, 'number', 'min="0"')}</td>
           <td>${input('awayGoals', match.awayGoals, 'number', 'min="0"')}</td>
-          <td>${renderTeam(match.away)}</td>
+            <td>${renderTeam(match.away)}</td>
           <td>${input('homePenalties', match.homePenalties, 'number', 'min="0"')}</td>
           <td>${input('awayPenalties', match.awayPenalties, 'number', 'min="0"')}</td>
           <td>${input('date', match.date, 'text', 'placeholder="dd/mm/aaaa"')}</td>
@@ -5489,21 +5621,22 @@
       assertTest('primer jugador corregido', defaultPlayers[0] === 'Alejandro Mc Farlane');
       assertTest('Liga AFA tiene 30 equipos', EQUIPOS_LIGA_AFA.length === 30);
       assertTest('Liga AFA tiene dos zonas de 15', ZONAS_LIGA_AFA.A.length === 15 && ZONAS_LIGA_AFA.B.length === 15);
-      assertTest('fixture Apertura tiene 240 partidos', defaultMatches.length === 240);
+      assertTest('fixture Clausura tiene 240 partidos', defaultMatches.length === 240);
       assertTest('fixture tiene 16 fechas', new Set(defaultMatches.map(match => match.group.match(/^Fecha \d+/)?.[0])).size === 16);
       assertTest('cada fecha tiene 15 partidos', Array.from({ length: 16 }, (_, index) =>
         defaultMatches.filter(match => match.group.startsWith(`Fecha ${index + 1} `)).length
       ).every(total => total === 15));
-      assertTest('fixture tiene fecha, hora y kickoff', defaultMatches.every(match => match.date && match.time && match.kickoff));
+      assertTest('primeras tres fechas tienen programación oficial', defaultMatches.filter(match => match.date && match.time && match.kickoff).length === 45);
+      assertTest('fechas posteriores esperan programación oficial', defaultMatches.slice(45).every(match => !match.date && !match.time && !match.kickoff));
       assertTest('fallback usa fixture oficial cuando está incompleto', resolveMatchesData(defaultMatches.slice(0, 100)).length === 240);
-      assertTest('Fecha 1 incluye Aldosivi-Defensa', defaultMatches.some(match =>
-        match.group.startsWith('Fecha 1 ') && match.home === 'Aldosivi' && match.away === 'Defensa y Justicia'
+      assertTest('Fecha 1 incluye Defensa-Aldosivi', defaultMatches.some(match =>
+        match.group.startsWith('Fecha 1 ') && match.home === 'Defensa y Justicia' && match.away === 'Aldosivi'
       ));
       assertTest('Fecha 6 tiene 15 interzonales', defaultMatches.filter(match =>
         match.group === 'Fecha 6 - Interzonal'
       ).length === 15);
-      assertTest('Fecha 15 incluye River-Boca', defaultMatches.some(match =>
-        match.group.startsWith('Fecha 15 ') && match.home === 'River Plate' && match.away === 'Boca Juniors'
+      assertTest('Fecha 15 incluye Boca-River', defaultMatches.some(match =>
+        match.group.startsWith('Fecha 15 ') && match.home === 'Boca Juniors' && match.away === 'River Plate'
       ));
       renderFixture();
       assertTest('fixture renderiza encabezados por fecha', document.getElementById('fixtureBody').innerHTML.includes('fixture-date-row'));
@@ -5569,7 +5702,7 @@
       assertTest('outlook bloqueado para registro y login', isAllowedProdeEmail('usuario@outlook.com') === false);
       assertTest('mensaje de dominio auth correcto', AUTH_DOMAIN_ERROR_MESSAGE === 'Solo se permiten usuarios @prode.local');
       assertTest('export ranking tiene saltos seguros', buildRankingExportText().includes('\n\n'));
-      assertTest('resultado exacto suma 3 puntos', pointsFor({ matchId: 1, home: 2, away: 1 }, testMatches) === 3);
+      assertTest('resultado local correcto suma 1 punto', pointsFor({ matchId: 1, home: 2, away: 1, outcome: 'L' }, testMatches) === 1);
       assertTest('ganador correcto suma 1 punto', pointsFor({ matchId: 1, home: 1, away: 0 }, testMatches) === 1);
       assertTest('empate correcto suma 1 punto', pointsFor({ matchId: 1, home: 1, away: 1 }, [{ id: 1, homeGoals: 2, awayGoals: 2 }]) === 1);
       assertTest('resultado incorrecto suma 0 puntos', pointsFor({ matchId: 1, home: 0, away: 1 }, testMatches) === 0);
