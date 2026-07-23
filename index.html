@@ -1131,6 +1131,11 @@
     .result-letter.win { background: #35a853; }
     .result-letter.draw { background: #f0a437; }
     .result-letter.loss { background: #d84a4a; }
+    .recent-form { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: middle; }
+    .recent-form-mark { width: 19px; height: 19px; display: inline-grid; place-items: center; border-radius: 5px; color: #fff; font-size: 10px; font-weight: 1000; }
+    .recent-form-mark.win { background: #35a853; }
+    .recent-form-mark.draw { background: #f0a437; }
+    .recent-form-mark.loss { background: #d84a4a; }
 
     .home-hero {
       margin-bottom: 18px;
@@ -2352,6 +2357,21 @@
         </table>
         <button class="primary" id="saveContingencyBtn" onclick="saveContingencyPredictions()" style="margin-top:12px">Guardar contingencia</button>
       </div>
+
+      <div class="card admin-only">
+        <h2>🏆 Resultados de Playoffs</h2>
+        <p class="muted">Único lugar habilitado para cargar fecha, hora, resultado oficial y penales. Eliminatorias permanece en modo lectura.</p>
+        <button class="primary" id="confirmPlayoffSeedsBtn" onclick="confirmPlayoffSeeds()">Confirmar cruces de Octavos</button>
+        <p id="playoffAdminStatus" class="muted"></p>
+      </div>
+      <div class="card table-wrap admin-only">
+        <table>
+          <thead>
+            <tr><th>#</th><th>Fase</th><th>Local</th><th>GL</th><th>GV</th><th>Visitante</th><th>PL</th><th>PV</th><th>Fecha</th><th>Hora</th></tr>
+          </thead>
+          <tbody id="playoffAdminBody"></tbody>
+        </table>
+      </div>
     </section>
 
     <section id="perfil" class="tab hidden">
@@ -2658,6 +2678,8 @@
       matches: `${CONFIG_TORNEO.id}_${CONFIG_TORNEO.year}_matches`,
       predictions: `${CONFIG_TORNEO.id}_${CONFIG_TORNEO.year}_predictions`,
       playoffResults: `${CONFIG_TORNEO.id}_${CONFIG_TORNEO.year}_playoffResults`,
+      playoffResultsBackup: `${CONFIG_TORNEO.id}_${CONFIG_TORNEO.year}_playoffResultsBackup`,
+      playoffSeeds: `${CONFIG_TORNEO.id}_${CONFIG_TORNEO.year}_playoffSeeds`,
       resultLock: `${CONFIG_TORNEO.id}_${CONFIG_TORNEO.year}_lockResults`,
       predictionLock: `${CONFIG_TORNEO.id}_${CONFIG_TORNEO.year}_lockPredictions`,
       theme: `${CONFIG_TORNEO.id}_${CONFIG_TORNEO.year}_theme`,
@@ -2749,6 +2771,15 @@
 
     let playoffResults = safeParse(STORAGE_KEYS.playoffResults, {});
     if (!playoffResults || Array.isArray(playoffResults) || typeof playoffResults !== 'object') playoffResults = {};
+    if (!localStorage.getItem(STORAGE_KEYS.playoffResultsBackup)) {
+      localStorage.setItem(STORAGE_KEYS.playoffResultsBackup, JSON.stringify({
+        version: 1,
+        createdAt: new Date().toISOString(),
+        playoffResults
+      }));
+    }
+    let playoffSeeds = safeParse(STORAGE_KEYS.playoffSeeds, []);
+    if (!Array.isArray(playoffSeeds) || playoffSeeds.length !== 8) playoffSeeds = [];
 
     let currentTheme = localStorage.getItem(STORAGE_KEYS.theme) || 'light';
     let currentProfileName = localStorage.getItem(STORAGE_KEYS.profileName) || '';
@@ -3155,8 +3186,8 @@
       );
       return {
         done: playerPredictions.length,
-        total: matches.length,
-        percent: matches.length ? Math.round((playerPredictions.length / matches.length) * 100) : 0
+        total: getPredictionMatches().length,
+        percent: getPredictionMatches().length ? Math.round((playerPredictions.length / getPredictionMatches().length) * 100) : 0
       };
     }
 
@@ -3636,6 +3667,7 @@
       localStorage.setItem(STORAGE_KEYS.matches, JSON.stringify(matches));
       localStorage.setItem(STORAGE_KEYS.predictions, JSON.stringify(predictions));
       localStorage.setItem(STORAGE_KEYS.playoffResults, JSON.stringify(playoffResults));
+      localStorage.setItem(STORAGE_KEYS.playoffSeeds, JSON.stringify(playoffSeeds));
       saveCloudData();
     }
 
@@ -3650,6 +3682,7 @@
       localStorage.setItem(STORAGE_KEYS.players, JSON.stringify(players));
       localStorage.setItem(STORAGE_KEYS.matches, JSON.stringify(matches));
       localStorage.setItem(STORAGE_KEYS.playoffResults, JSON.stringify(playoffResults));
+      localStorage.setItem(STORAGE_KEYS.playoffSeeds, JSON.stringify(playoffSeeds));
       saveCloudData();
     }
 
@@ -3702,6 +3735,9 @@
           if (cloudData.playoffResults && !Array.isArray(cloudData.playoffResults) && typeof cloudData.playoffResults === 'object') {
             playoffResults = cloudData.playoffResults;
           }
+          if (Array.isArray(cloudData.playoffSeeds) && cloudData.playoffSeeds.length === 8) {
+            playoffSeeds = cloudData.playoffSeeds;
+          }
           const addedCurrentPlayer = currentProfileName && !players.includes(currentProfileName);
           if (addedCurrentPlayer) players.push(currentProfileName);
 
@@ -3728,11 +3764,14 @@
           localStorage.setItem(STORAGE_KEYS.resultLock, JSON.stringify(isResultLocked));
           localStorage.setItem(STORAGE_KEYS.predictionLock, JSON.stringify(arePredictionsLocked));
           localStorage.setItem(STORAGE_KEYS.playoffResults, JSON.stringify(playoffResults));
+          localStorage.setItem(STORAGE_KEYS.playoffSeeds, JSON.stringify(playoffSeeds));
           if (addedCurrentPlayer && isAdmin) {
             await window.prodeFirebase.saveData({
               players,
               matches,
               playoffResults,
+              playoffResultsBackup: safeParse(STORAGE_KEYS.playoffResultsBackup, null),
+              playoffSeeds,
               isResultLocked,
               arePredictionsLocked
             });
@@ -3747,6 +3786,8 @@
               players,
               matches,
               playoffResults,
+              playoffResultsBackup: safeParse(STORAGE_KEYS.playoffResultsBackup, null),
+              playoffSeeds,
               isResultLocked,
               arePredictionsLocked
             });
@@ -3778,6 +3819,8 @@
           players,
           matches,
           playoffResults,
+          playoffResultsBackup: safeParse(STORAGE_KEYS.playoffResultsBackup, null),
+          playoffSeeds,
           isResultLocked,
           arePredictionsLocked
         });
@@ -3852,7 +3895,8 @@
     }
 
     function renderTeam(teamName) {
-      return `<span class="team-name"><span>${escapeHtml(teamName)}</span></span>`;
+      const crest = typeof renderClubBadge === 'function' ? renderClubBadge(teamName) : '';
+      return `<span class="team-name">${crest}<span>${escapeHtml(teamName)}</span></span>`;
     }
 
     function showTab(id, button) {
@@ -4024,7 +4068,7 @@
 
     function getPredictionDateFilterOptions() {
       const optionsByValue = new Map();
-      [...matches].sort(compareFixtureMatches).forEach(match => {
+      [...getPredictionMatches()].sort(compareFixtureMatches).forEach(match => {
         const value = getPredictionDateFilterValue(match);
         if (!value || optionsByValue.has(value)) return;
         optionsByValue.set(value, {
@@ -4232,7 +4276,7 @@
         .map(player => `<option value="${escapeHtml(player)}">${escapeHtml(player)}</option>`)
         .join('');
 
-      document.getElementById('matchSelect').innerHTML = matches
+      document.getElementById('matchSelect').innerHTML = getPredictionMatches()
         .map(match => `<option value="${match.id}">#${match.id} ${escapeHtml(match.home)} vs ${escapeHtml(match.away)}</option>`)
         .join('');
     }
@@ -4246,7 +4290,7 @@
       const matchId = Number(matchIdRaw);
       const home = Number(homeRaw);
       const away = Number(awayRaw);
-      const match = matches.find(item => item.id === matchId);
+      const match = getPredictionMatches().find(item => item.id === matchId);
 
       if (!isPredictionEditableForMatch(match)) {
         const reason = getPredictionBlockedReason(match) || 'Pronóstico cerrado';
@@ -4276,7 +4320,7 @@
 
     async function savePredictionRow(matchId) {
       if (!requireAuth('guardar pronostico')) return;
-      const match = matches.find(item => item.id === matchId);
+      const match = getPredictionMatches().find(item => item.id === matchId);
       if (!isPredictionEditableForMatch(match)) {
         const reason = getPredictionBlockedReason(match) || 'Pronóstico cerrado';
         setPredictionStatus(`${reason}: no se puede cargar ni modificar este partido.`, true);
@@ -4314,7 +4358,7 @@
     }
 
     function editPredictionRow(matchId) {
-      const match = matches.find(item => item.id === matchId);
+      const match = getPredictionMatches().find(item => item.id === matchId);
       if (!isPredictionEditableForMatch(match)) {
         const reason = getPredictionBlockedReason(match) || 'Pronóstico cerrado';
         setPredictionStatus(`${reason}: no se puede editar este partido.`, true);
@@ -4325,7 +4369,7 @@
       renderPredictions();
     }
 
-    function pointsFor(prediction, matchList = matches) {
+    function pointsFor(prediction, matchList = getPredictionMatches()) {
       const match = matchList.find(item => item.id === prediction.matchId);
       if (!match || match.homeGoals === '' || match.awayGoals === '') return 0;
 
@@ -4370,7 +4414,7 @@
       const currentDate = dateSelect.value;
       const currentGroup = groupSelect.value;
       const dates = getPredictionDateFilterOptions();
-      const groups = [...new Set(matches.map(getMatchZoneName).filter(Boolean))]
+      const groups = [...new Set(getPredictionMatches().map(getPredictionGroupPhaseName).filter(Boolean))]
         .sort((a, b) => a.localeCompare(b, 'es'));
 
       dateSelect.innerHTML = '<option value="">Todas las fechas/fases</option>' + dates
@@ -4404,7 +4448,7 @@
 
     function getFilteredPredictionMatches() {
       const filters = getPredictionFilters();
-      return matches.filter(match => {
+      return getPredictionMatches().filter(match => {
         const matchDate = getPredictionDateFilterValue(match);
         const matchGroup = getPredictionGroupPhaseName(match);
         const matchText = `${match.home} ${match.away}`.toLowerCase();
@@ -4417,7 +4461,7 @@
     function filterPredictionRowsByCurrentFilters(sourcePredictions) {
       const filters = getPredictionFilters();
       return dedupePredictionList(sourcePredictions)
-        .map(prediction => ({ prediction, match: matches.find(item => item.id === prediction.matchId) }))
+        .map(prediction => ({ prediction, match: getPredictionMatches().find(item => item.id === prediction.matchId) }))
         .filter(row => {
           if (!row.match) return false;
           const matchDate = getPredictionDateFilterValue(row.match);
@@ -4508,7 +4552,7 @@
     }
 
     function openMatchPredictionsModal(matchId) {
-      const match = matches.find(item => item.id === matchId);
+      const match = getPredictionMatches().find(item => item.id === matchId);
       if (!match) return;
       if (!canViewConsolidatedPredictionsForMatch(match)) {
         setPredictionStatus('Los pronósticos consolidados se habilitan cuando el partido queda cerrado.', true);
@@ -4807,6 +4851,30 @@
       return tables;
     }
 
+    function getRecentTeamForm(team) {
+      return getPredictionMatches()
+        .filter(match => hasOfficialResult(match) && (match.home === team || match.away === team))
+        .sort((a, b) => (getMatchStartDateTime(a)?.getTime() || 0) - (getMatchStartDateTime(b)?.getTime() || 0))
+        .slice(-5)
+        .map(match => {
+          const isHome = match.home === team;
+          const own = Number(isHome ? match.homeGoals : match.awayGoals);
+          const rivalGoals = Number(isHome ? match.awayGoals : match.homeGoals);
+          const rival = isHome ? match.away : match.home;
+          const result = own > rivalGoals ? 'G' : own < rivalGoals ? 'P' : 'E';
+          return { result, title: `${match.date || ''} · ${team} ${own}-${rivalGoals} ${rival}` };
+        });
+    }
+
+    function renderRecentTeamForm(team) {
+      const form = getRecentTeamForm(team);
+      if (!form.length) return '';
+      return `<span class="recent-form" aria-label="Últimos resultados">${form.map(item => {
+        const cssClass = item.result === 'G' ? 'win' : item.result === 'E' ? 'draw' : 'loss';
+        return `<span class="recent-form-mark ${cssClass}" title="${escapeHtml(item.title)}">${item.result}</span>`;
+      }).join('')}</span>`;
+    }
+
     function renderLigaTables() {
       const container = document.getElementById('groupsTablesBody');
       if (!container) return;
@@ -4834,7 +4902,7 @@
               ${table.map((row, index) => `
                 <tr class="${index < 8 ? 'playoff-qualified' : ''}">
                   <td><span class="match-number">${index + 1}</span></td>
-                  <td class="group-table-team">${renderTeam(row.team)}</td>
+                  <td class="group-table-team">${renderTeam(row.team)}${renderRecentTeamForm(row.team)}</td>
                   <td><span class="points-badge">${row.points}</span></td>
                   <td>${row.played}</td>
                   <td>${row.won}</td>
@@ -4894,7 +4962,7 @@
 
       const profile = registeredUserProfiles.find(item => item.uid === playerSelect.value);
       const round = dateSelect.value || 'Fecha 1';
-      const roundMatches = matches.filter(match => getPredictionStageName(match) === round);
+      const roundMatches = getPredictionMatches().filter(match => getPredictionStageName(match) === round);
       if (!profile) {
         body.innerHTML = '<tr><td colspan="5" class="muted">Seleccioná un jugador registrado.</td></tr>';
         if (status) status.innerText = `${round}: ${roundMatches.length} partidos.`;
@@ -4937,7 +5005,7 @@
         return;
       }
 
-      const roundMatches = matches.filter(match => getPredictionStageName(match) === round);
+      const roundMatches = getPredictionMatches().filter(match => getPredictionStageName(match) === round);
       const predictionDoc = await window.prodeFirebase.loadUserPredictions(profile.uid);
       const playerName = getRegisteredPlayerName(profile);
       const updated = normalizePredictionList(predictionDoc?.predictions, playerName);
@@ -5019,6 +5087,7 @@
     }
 
     function generateRoundOf16() {
+      if (playoffSeeds.length === 8) return playoffSeeds.map(match => ({ ...match }));
       const tables = calculateLigaTables();
       const zoneA = tables['Zona A'];
       const zoneB = tables['Zona B'];
@@ -5030,6 +5099,25 @@
       }
 
       return bracket;
+    }
+
+    function confirmPlayoffSeeds() {
+      if (!isAdmin) return;
+      if (playoffSeeds.length === 8 && !window.confirm('Los cruces ya están confirmados. ¿Querés recalcularlos con la tabla actual? Los resultados incompatibles dejarán de aplicarse.')) return;
+      const previousSeeds = playoffSeeds;
+      playoffSeeds = [];
+      const generated = generateRoundOf16();
+      if (generated.length !== 8 || generated.some(match => !match.home || !match.away)) {
+        playoffSeeds = previousSeeds;
+        alert('No se pudieron generar los ocho cruces.');
+        return;
+      }
+      playoffSeeds = generated.map(match => ({ home: match.home, away: match.away }));
+      localStorage.setItem(STORAGE_KEYS.playoffSeeds, JSON.stringify(playoffSeeds));
+      saveCloudData();
+      renderAll();
+      renderEliminatorias();
+      alert('Cruces de Octavos confirmados.');
     }
 
     const PLAYOFF_STAGE_LABELS = {
@@ -5139,7 +5227,97 @@
       rounds.push({ stage: 'cuartos', matches: cuartos });
       rounds.push({ stage: 'semifinales', matches: semifinales });
       rounds.push({ stage: 'final', matches: final });
-      return rounds;
+      return rounds.map(round => ({
+        ...round,
+        matches: round.matches.map(match => {
+          const result = getPlayoffResult(match.stage, match.index, match.home, match.away);
+          const date = result.date || '';
+          const time = result.time || '';
+          return {
+            ...match,
+            group: PLAYOFF_STAGE_LABELS[match.stage],
+            date,
+            time,
+            kickoff: date && time ? buildKickoffFromDateAndTime(date, time) : '',
+            homeGoals: result.homeGoals ?? '',
+            awayGoals: result.awayGoals ?? '',
+            homePenalties: result.homePenalties ?? '',
+            awayPenalties: result.awayPenalties ?? ''
+          };
+        })
+      }));
+    }
+
+    function getAllPlayoffMatches() {
+      return buildPlayoffBracket().flatMap(round => round.matches);
+    }
+
+    function getPredictionMatches() {
+      const readyPlayoffs = getAllPlayoffMatches().filter(match =>
+        !isPendingPlayoffTeam(match.home)
+        && !isPendingPlayoffTeam(match.away)
+        && match.date
+        && match.time
+      );
+      return [...matches, ...readyPlayoffs];
+    }
+
+    function renderPlayoffAdmin() {
+      const body = document.getElementById('playoffAdminBody');
+      if (!body) return;
+      if (!isAdmin) {
+        body.innerHTML = '';
+        return;
+      }
+      const playoffMatches = getAllPlayoffMatches();
+      body.innerHTML = playoffMatches.map(match => {
+        const pending = isPendingPlayoffTeam(match.home) || isPendingPlayoffTeam(match.away);
+        const input = (field, value, type = 'number', extra = '') =>
+          `<input class="score-input" type="${type}" ${extra} value="${escapeHtml(value ?? '')}" ${pending ? 'disabled' : ''}
+            onchange="updatePlayoffAdmin('${match.stage}',${match.index},'${field}',this.value)">`;
+        return `<tr>
+          <td>#${match.id}</td>
+          <td>${escapeHtml(PLAYOFF_STAGE_LABELS[match.stage])}</td>
+          <td>${renderTeam(match.home)}</td>
+          <td>${input('homeGoals', match.homeGoals, 'number', 'min="0"')}</td>
+          <td>${input('awayGoals', match.awayGoals, 'number', 'min="0"')}</td>
+          <td>${renderTeam(match.away)}</td>
+          <td>${input('homePenalties', match.homePenalties, 'number', 'min="0"')}</td>
+          <td>${input('awayPenalties', match.awayPenalties, 'number', 'min="0"')}</td>
+          <td>${input('date', match.date, 'text', 'placeholder="dd/mm/aaaa"')}</td>
+          <td>${input('time', match.time, 'time')}</td>
+        </tr>`;
+      }).join('');
+      const status = document.getElementById('playoffAdminStatus');
+      if (status) status.innerText = `${playoffSeeds.length === 8 ? 'Cruces confirmados' : 'Cruces dinámicos sin confirmar'} · ${playoffMatches.filter(match => hasOfficialResult(match)).length}/15 resultados cargados.`;
+    }
+
+    function updatePlayoffAdmin(stage, index, field, rawValue) {
+      if (!isAdmin || isResultEditingBlocked()) {
+        alert('Resultados bloqueados. Abrilos desde Administración.');
+        renderPlayoffAdmin();
+        return;
+      }
+      const match = getAllPlayoffMatches().find(item => item.stage === stage && item.index === index);
+      if (!match || isPendingPlayoffTeam(match.home) || isPendingPlayoffTeam(match.away)) return;
+      const numericFields = ['homeGoals', 'awayGoals', 'homePenalties', 'awayPenalties'];
+      let value = rawValue;
+      if (numericFields.includes(field)) {
+        value = rawValue === '' ? '' : Math.max(0, Math.trunc(Number(rawValue)));
+        if (rawValue !== '' && !Number.isFinite(value)) return;
+      }
+      if (field === 'date' && value && !getFixtureDateParts(value)) {
+        alert('Usá el formato dd/mm/aaaa.');
+        renderPlayoffAdmin();
+        return;
+      }
+      const key = playoffKey(stage, index);
+      const existing = getPlayoffResult(stage, index, match.home, match.away);
+      playoffResults[key] = { ...existing, home: match.home, away: match.away, [field]: value };
+      localStorage.setItem(STORAGE_KEYS.playoffResults, JSON.stringify(playoffResults));
+      saveCloudData();
+      renderAll();
+      renderEliminatorias();
     }
 
     function renderPlayoffMatch(match) {
@@ -5296,6 +5474,7 @@
       renderLigaTables();
       renderPlayers();
       renderContingencySelectors();
+      renderPlayoffAdmin();
     }
 
     function assertTest(name, condition) {
