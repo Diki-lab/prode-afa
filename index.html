@@ -2888,6 +2888,7 @@
     let legacyRankingPredictions = [];
     let registeredUserProfiles = [];
     let editingPredictionRows = {};
+    let predictionDeadlineSignature = '';
     const LOCAL_AVATAR_BASE_PATH = 'img/avatars/';
 
     let isResultLocked = JSON.parse(localStorage.getItem(STORAGE_KEYS.resultLock) || 'false');
@@ -3205,6 +3206,10 @@
     }
 
     function isMatchScheduleConfirmed(match) {
+      if (match?.kickoff) {
+        const kickoff = new Date(match.kickoff);
+        if (!Number.isNaN(kickoff.getTime())) return true;
+      }
       return Boolean(match?.date && match?.time && match?.timeConfirmed !== false);
     }
 
@@ -3212,15 +3217,32 @@
       return !arePredictionsLocked
         && !isMatchStatusClosed(match)
         && isMatchScheduleConfirmed(match)
-        && (CONFIG_TORNEO.predictionTestMode || !hasMatchStarted(match, now));
+        && !hasMatchStarted(match, now);
     }
 
-    function getPredictionBlockedReason(match) {
+    function getPredictionBlockedReason(match, now = new Date()) {
       if (arePredictionsLocked) return 'Cerrado';
       if (isMatchStatusClosed(match)) return 'Partido cerrado';
       if (!isMatchScheduleConfirmed(match)) return 'Programación pendiente';
-      if (!CONFIG_TORNEO.predictionTestMode && hasMatchStarted(match)) return 'Partido iniciado';
+      if (hasMatchStarted(match, now)) return 'Partido iniciado';
       return '';
+    }
+
+    function getPredictionDeadlineSignature(now = new Date()) {
+      return getPredictionMatches()
+        .map(match => `${match.id}:${isPredictionEditableForMatch(match, now) ? 'abierto' : getPredictionBlockedReason(match, now)}`)
+        .join('|');
+    }
+
+    function refreshPredictionDeadlines() {
+      const nextSignature = getPredictionDeadlineSignature();
+      if (nextSignature === predictionDeadlineSignature) return;
+      predictionDeadlineSignature = nextSignature;
+      const predictionsTab = document.getElementById('pronosticos');
+      if (predictionsTab && !predictionsTab.classList.contains('hidden')) {
+        renderPredictions();
+      }
+      renderLockStatuses();
     }
 
     function isResultEditingBlocked() {
@@ -4772,6 +4794,7 @@
     }
 
     function renderPredictions() {
+      predictionDeadlineSignature = getPredictionDeadlineSignature();
       renderPredictionFilters();
       const filteredMatches = getFilteredPredictionMatches();
       const predictionsHead = document.getElementById('predictionsHead');
@@ -5851,9 +5874,9 @@
       isResultLocked = false;
       assertTest('bloqueo de pronósticos inactivo permite edicion', isPredictionEditingBlocked() === false);
       assertTest('bloqueo de resultados inactivo permite edicion', isResultEditingBlocked() === false);
-      assertTest('partido futuro sin status permite pronostico', isPredictionEditableForMatch({ date: '13/06/2026' }, new Date(2026, 5, 12, 12)) === true);
-      assertTest('partido de hoy bloquea pronostico', isPredictionEditableForMatch({ date: '12/06/2026' }, new Date(2026, 5, 12, 12)) === false);
-      assertTest('partido pasado bloquea pronostico', isPredictionEditableForMatch({ date: '11/06/2026' }, new Date(2026, 5, 12, 12)) === false);
+      assertTest('partido futuro sin status permite pronostico', isPredictionEditableForMatch({ date: '13/06/2026', time: '18:00' }, new Date(2026, 5, 12, 12)) === true);
+      assertTest('partido de hoy bloquea pronostico', isPredictionEditableForMatch({ date: '12/06/2026', time: '00:00' }, new Date(2026, 5, 12, 12)) === false);
+      assertTest('partido pasado bloquea pronostico', isPredictionEditableForMatch({ date: '11/06/2026', time: '18:00' }, new Date(2026, 5, 12, 12)) === false);
       assertTest('partido con hora permite antes del inicio Argentina', isPredictionEditableForMatch({ date: '12/06/2026', time: '22:00' }, new Date('2026-06-12T21:59:00-03:00')) === true);
       assertTest('partido con hora bloquea al inicio Argentina', isPredictionEditableForMatch({ date: '12/06/2026', time: '22:00' }, new Date('2026-06-12T22:00:00-03:00')) === false);
       assertTest('partido con kickoff bloquea al inicio Argentina', isPredictionEditableForMatch({ kickoff: '2026-06-12T22:00:00-03:00' }, new Date('2026-06-12T22:00:00-03:00')) === false);
@@ -5978,6 +6001,11 @@
     }
 
     renderAll();
+    predictionDeadlineSignature = getPredictionDeadlineSignature();
+    window.setInterval(refreshPredictionDeadlines, 15000);
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) refreshPredictionDeadlines();
+    });
   </script>
 </body>
 </html>
