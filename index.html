@@ -729,7 +729,8 @@
       border: 1px solid var(--border);
       font-size: 12px;
       font-weight: 900;
-      white-space: nowrap;
+      line-height: 1.25;
+      text-align: center;
     }
 
     .deadline-badge.open { background: var(--success-soft); color: var(--success-text); }
@@ -746,6 +747,11 @@
     .prediction-date-time small {
       color: var(--muted);
       white-space: nowrap;
+    }
+
+    .prediction-date-time .deadline-badge {
+      align-self: flex-start;
+      margin-top: 2px;
     }
 
     #contingencyTable th,
@@ -987,6 +993,20 @@
       color: var(--muted);
       font-weight: 800;
     }
+
+    .match-prediction-choice {
+      width: 34px;
+      height: 34px;
+      display: inline-grid;
+      place-items: center;
+      border-radius: 9px;
+      color: #fff;
+      font-weight: 1000;
+    }
+
+    .match-prediction-choice.local { background: #35a853; }
+    .match-prediction-choice.draw { background: #f0a437; color: #231600; }
+    .match-prediction-choice.visitor { background: #d84a4a; }
 
     .rank-medal {
       font-size: 20px;
@@ -3242,14 +3262,14 @@
 
     function getDeadlineBadgeData(match, now = new Date()) {
       const blockedReason = getPredictionBlockedReason(match, now);
-      if (blockedReason === 'Programación pendiente') return { cssClass: 'pending', text: blockedReason };
-      if (blockedReason === 'Partido iniciado') return { cssClass: 'started', text: blockedReason };
-      if (blockedReason) return { cssClass: 'closed', text: blockedReason };
+      if (blockedReason === 'Programación pendiente') return { cssClass: 'pending', text: blockedReason, shortText: 'Pendiente' };
+      if (blockedReason === 'Partido iniciado') return { cssClass: 'started', text: blockedReason, shortText: 'Iniciado' };
+      if (blockedReason) return { cssClass: 'closed', text: blockedReason, shortText: 'Cerrado' };
 
       const kickoff = getMatchStartDateTime(match);
-      if (!kickoff) return { cssClass: 'pending', text: 'Programación pendiente' };
+      if (!kickoff) return { cssClass: 'pending', text: 'Programación pendiente', shortText: 'Pendiente' };
       const remainingMs = kickoff.getTime() - now.getTime();
-      if (remainingMs <= 0) return { cssClass: 'started', text: 'Partido iniciado' };
+      if (remainingMs <= 0) return { cssClass: 'started', text: 'Partido iniciado', shortText: 'Iniciado' };
 
       const totalMinutes = Math.max(1, Math.ceil(remainingMs / 60000));
       const days = Math.floor(totalMinutes / 1440);
@@ -3260,12 +3280,12 @@
         : hours > 0
           ? `${hours} h ${minutes} min`
           : `${minutes} min`;
-      return { cssClass: 'open', text: `Abierto · cierra en ${remainingText}` };
+      return { cssClass: 'open', text: `Abierto · cierra en ${remainingText}`, shortText: 'Abierto' };
     }
 
-    function renderDeadlineBadge(match) {
+    function renderDeadlineBadge(match, compact = false) {
       const badge = getDeadlineBadgeData(match);
-      return `<span class="deadline-badge ${badge.cssClass}" data-deadline-match="${match.id}">${escapeHtml(badge.text)}</span>`;
+      return `<span class="deadline-badge ${badge.cssClass}" data-deadline-match="${match.id}" data-deadline-compact="${compact}" title="${escapeHtml(badge.text)}">${escapeHtml(compact ? badge.shortText : badge.text)}</span>`;
     }
 
     function updatePredictionCountdownLabels(now = new Date()) {
@@ -3274,8 +3294,10 @@
         const match = getPredictionMatches().find(item => item.id === matchId);
         if (!match) return;
         const badge = getDeadlineBadgeData(match, now);
+        const compact = element.getAttribute('data-deadline-compact') === 'true';
         element.className = `deadline-badge ${badge.cssClass}`;
-        element.textContent = badge.text;
+        element.textContent = compact ? badge.shortText : badge.text;
+        element.title = badge.text;
       });
     }
 
@@ -4763,8 +4785,12 @@
       subtitle.className = 'muted match-predictions-subtitle';
       subtitle.innerHTML = getMatchModalSubtitle(match);
       body.innerHTML = getConsolidatedPredictionsForMatch(match.id).map(row => {
-        const predictionText = row.prediction
-          ? `${escapeHtml(row.prediction.home)} - ${escapeHtml(row.prediction.away)}`
+        const outcome = row.prediction
+          ? row.prediction.outcome || getPredictionOutcome(row.prediction.home, row.prediction.away)
+          : '';
+        const outcomeClass = outcome === 'L' ? 'local' : outcome === 'E' ? 'draw' : 'visitor';
+        const predictionText = outcome
+          ? `<span class="match-prediction-choice ${outcomeClass}" title="Pronóstico ${outcome}">${outcome}</span>`
           : '<span class="match-predictions-empty">Sin cargar</span>';
         return `
           <tr>
@@ -4862,7 +4888,7 @@
             <th>Estado</th>
             <th>Visitante</th>
             <th>Puntos</th>
-            <th>Guardar/Accion</th>
+            <th>Acción</th>
           </tr>
         `;
       }
@@ -4904,13 +4930,14 @@
             <td><div class="prediction-date-time">
               <strong>${escapeHtml(getPredictionDateFilterLabel(match))}</strong>
               <small>${escapeHtml(match.date || 'Fecha pendiente')} · ${escapeHtml(match.time || 'Hora pendiente')}</small>
+              ${renderDeadlineBadge(match)}
             </div></td>
             <td><span class="group-badge">${escapeHtml(getPredictionGroupPhaseName(match))}</span></td>
             <td>${renderTeam(match.home)}</td>
             <td>${outcomeButtons}</td>
             <td>${renderTeam(match.away)}</td>
             <td><span class="points-badge">${points}</span></td>
-            <td><div class="prediction-actions">${renderDeadlineBadge(match)}${rowAction}</div></td>
+            <td><div class="prediction-actions">${rowAction}</div></td>
           </tr>
         `;
       }).join('');
