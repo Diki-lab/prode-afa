@@ -72,7 +72,7 @@
 
     header {
       background:
-        linear-gradient(110deg, rgba(11,19,43,.94), rgba(15,52,96,.78), rgba(58,134,200,.55)),
+        linear-gradient(110deg, rgba(11,19,43,.82), rgba(15,52,96,.60), rgba(58,134,200,.38)),
         url('img/estadio_fondo.jpg');
       background-size: cover;
       background-position: center;
@@ -90,25 +90,6 @@
       gap: 18px;
       box-shadow: 0 10px 35px rgba(0,0,0,.35);
       z-index: 20;
-    }
-
-    header::before {
-      content: "⚽";
-      position: absolute;
-      left: 6%;
-      top: 10px;
-      font-size: 92px;
-      opacity: .08;
-      transform: rotate(-15deg);
-    }
-
-    header::after {
-      content: "🏆";
-      position: absolute;
-      right: 8%;
-      top: 6px;
-      font-size: 88px;
-      opacity: .08;
     }
 
     .top-actions {
@@ -737,6 +718,35 @@
     .real-outcome-badge.local { background: #dff5e7; color: #087443; border-color: #9bd4b3; }
     .real-outcome-badge.draw { background: #fff0d8; color: #9a5b00; border-color: #efc477; }
     .real-outcome-badge.visitor { background: #e3edff; color: #174ea6; border-color: #a9c3f5; }
+
+    .deadline-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 30px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      font-size: 12px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .deadline-badge.open { background: var(--success-soft); color: var(--success-text); }
+    .deadline-badge.started,
+    .deadline-badge.closed { background: var(--danger-soft); color: var(--danger-text); }
+    .deadline-badge.pending { background: var(--warning-soft); color: var(--warning-text); }
+
+    .prediction-date-time {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .prediction-date-time small {
+      color: var(--muted);
+      white-space: nowrap;
+    }
 
     #contingencyTable th,
     #contingencyTable td {
@@ -2062,7 +2072,7 @@
   <header style="display:none">
     <div class="header-brand">
       <h1><span class="header-logo-icon">⚽</span> Prode Liga <span>AFA</span></h1>
-      <p>Apertura 2026 · 30 clubes · 2 zonas</p>
+      <p>Clausura 2026 · 30 clubes · 2 zonas</p>
     </div>
     <div class="header-user">
       <div class="header-user-menu-wrap" id="headerUserMenuWrap">
@@ -2219,12 +2229,14 @@
             <tr>
               <th>#</th>
               <th>Fecha</th>
+              <th>Hora</th>
               <th>Grupo/Fase</th>
               <th>Local</th>
               <th>GL</th>
               <th>GV</th>
               <th>Estado real</th>
               <th>Visitante</th>
+              <th>Cierre</th>
             </tr>
           </thead>
           <tbody id="fixtureBody"></tbody>
@@ -3228,6 +3240,45 @@
       return '';
     }
 
+    function getDeadlineBadgeData(match, now = new Date()) {
+      const blockedReason = getPredictionBlockedReason(match, now);
+      if (blockedReason === 'Programación pendiente') return { cssClass: 'pending', text: blockedReason };
+      if (blockedReason === 'Partido iniciado') return { cssClass: 'started', text: blockedReason };
+      if (blockedReason) return { cssClass: 'closed', text: blockedReason };
+
+      const kickoff = getMatchStartDateTime(match);
+      if (!kickoff) return { cssClass: 'pending', text: 'Programación pendiente' };
+      const remainingMs = kickoff.getTime() - now.getTime();
+      if (remainingMs <= 0) return { cssClass: 'started', text: 'Partido iniciado' };
+
+      const totalMinutes = Math.max(1, Math.ceil(remainingMs / 60000));
+      const days = Math.floor(totalMinutes / 1440);
+      const hours = Math.floor((totalMinutes % 1440) / 60);
+      const minutes = totalMinutes % 60;
+      const remainingText = days > 0
+        ? `${days} d ${hours} h`
+        : hours > 0
+          ? `${hours} h ${minutes} min`
+          : `${minutes} min`;
+      return { cssClass: 'open', text: `Abierto · cierra en ${remainingText}` };
+    }
+
+    function renderDeadlineBadge(match) {
+      const badge = getDeadlineBadgeData(match);
+      return `<span class="deadline-badge ${badge.cssClass}" data-deadline-match="${match.id}">${escapeHtml(badge.text)}</span>`;
+    }
+
+    function updatePredictionCountdownLabels(now = new Date()) {
+      document.querySelectorAll('[data-deadline-match]').forEach(element => {
+        const matchId = Number(element.getAttribute('data-deadline-match'));
+        const match = getPredictionMatches().find(item => item.id === matchId);
+        if (!match) return;
+        const badge = getDeadlineBadgeData(match, now);
+        element.className = `deadline-badge ${badge.cssClass}`;
+        element.textContent = badge.text;
+      });
+    }
+
     function getPredictionDeadlineSignature(now = new Date()) {
       return getPredictionMatches()
         .map(match => `${match.id}:${isPredictionEditableForMatch(match, now) ? 'abierto' : getPredictionBlockedReason(match, now)}`)
@@ -3235,6 +3286,7 @@
     }
 
     function refreshPredictionDeadlines() {
+      updatePredictionCountdownLabels();
       const nextSignature = getPredictionDeadlineSignature();
       if (nextSignature === predictionDeadlineSignature) return;
       predictionDeadlineSignature = nextSignature;
@@ -4340,7 +4392,7 @@
         .map(match => {
           const headerTitle = getFixtureHeaderTitle(match);
           const headerRow = headerTitle !== previousHeader
-            ? `<tr class="fixture-date-row"><td colspan="8"><span class="fixture-date-title">${escapeHtml(headerTitle)}</span></td></tr>`
+            ? `<tr class="fixture-date-row"><td colspan="10"><span class="fixture-date-title">${escapeHtml(headerTitle)}</span></td></tr>`
             : '';
           previousHeader = headerTitle;
 
@@ -4348,13 +4400,15 @@
             ${headerRow}
             <tr>
               <td><span class="match-number">${match.id}</span></td>
-              <td>${escapeHtml(match.date)}</td>
+              <td>${escapeHtml(match.date || 'Pendiente')}</td>
+              <td>${escapeHtml(match.time || '—')}</td>
               <td><span class="group-badge">${escapeHtml(match.group)}</span></td>
               <td>${renderTeam(match.home)}</td>
               <td><input class="score-input" type="number" min="0" value="${escapeHtml(match.homeGoals)}" ${(!isAdmin || isResultLocked) ? 'disabled' : ''} onchange="updateResult(${match.id}, 'homeGoals', this.value)"></td>
               <td><input class="score-input" type="number" min="0" value="${escapeHtml(match.awayGoals)}" ${(!isAdmin || isResultLocked) ? 'disabled' : ''} onchange="updateResult(${match.id}, 'awayGoals', this.value)"></td>
               <td>${renderRealMatchOutcome(match)}</td>
               <td>${renderTeam(match.away)}</td>
+              <td>${renderDeadlineBadge(match)}</td>
             </tr>
           `;
         })
@@ -4802,7 +4856,7 @@
       if (predictionsHead) {
         predictionsHead.innerHTML = `
           <tr>
-            <th>Fecha/Fase</th>
+            <th>Fecha / hora</th>
             <th>Grupo/Fase</th>
             <th>Local</th>
             <th>Estado</th>
@@ -4840,8 +4894,6 @@
           if (canEdit) {
             rowAction += `<button class="secondary-action" onclick="editPredictionRow(${match.id})">Editar</button>`;
           }
-        } else if (!canEdit) {
-          rowAction = `<span class="muted">${escapeHtml(getPredictionBlockedReason(match) || 'Cerrado')}</span>`;
         }
         if (canViewDetails) {
           rowAction += `<button class="secondary-action prediction-view-button" title="Ver pronósticos del partido" onclick="openMatchPredictionsModal(${match.id})">Ver</button>`;
@@ -4849,13 +4901,16 @@
 
         return `
           <tr>
-            <td>${escapeHtml(getPredictionDateFilterLabel(match))}</td>
+            <td><div class="prediction-date-time">
+              <strong>${escapeHtml(getPredictionDateFilterLabel(match))}</strong>
+              <small>${escapeHtml(match.date || 'Fecha pendiente')} · ${escapeHtml(match.time || 'Hora pendiente')}</small>
+            </div></td>
             <td><span class="group-badge">${escapeHtml(getPredictionGroupPhaseName(match))}</span></td>
             <td>${renderTeam(match.home)}</td>
             <td>${outcomeButtons}</td>
             <td>${renderTeam(match.away)}</td>
             <td><span class="points-badge">${points}</span></td>
-            <td><div class="prediction-actions">${rowAction}</div></td>
+            <td><div class="prediction-actions">${renderDeadlineBadge(match)}${rowAction}</div></td>
           </tr>
         `;
       }).join('');
