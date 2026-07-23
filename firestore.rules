@@ -20,7 +20,7 @@ service cloud.firestore {
     }
 
     function isLigaAfaTournament(prodeId) {
-      return prodeId.matches('^liga_afa_[0-9]{4}$');
+      return prodeId.matches('^liga_afa(_(apertura|clausura))?_[0-9]{4}$');
     }
 
     function validUserProfile(uid) {

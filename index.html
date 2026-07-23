@@ -738,6 +738,32 @@
     .real-outcome-badge.draw { background: #fff0d8; color: #9a5b00; border-color: #efc477; }
     .real-outcome-badge.visitor { background: #e3edff; color: #174ea6; border-color: #a9c3f5; }
 
+    #contingencyTable th,
+    #contingencyTable td {
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    #contingencyTable th:first-child,
+    #contingencyTable td:first-child {
+      width: 54px;
+    }
+
+    #contingencyTable th:nth-child(3),
+    #contingencyTable td:nth-child(3) {
+      width: 150px;
+      text-align: center;
+    }
+
+    #contingencyTable th:last-child,
+    #contingencyTable td:last-child {
+      width: 170px;
+    }
+
+    #contingencyTable .prediction-outcome {
+      justify-content: center;
+    }
+
     .group-badge {
       display: inline-block;
       background: var(--success-soft);
@@ -2408,9 +2434,9 @@
         <p id="contingencyStatus" class="muted"></p>
       </div>
       <div class="card table-wrap admin-only">
-        <table>
+        <table id="contingencyTable">
           <thead>
-            <tr><th>#</th><th>Local</th><th>Pronóstico</th><th>Visitante</th><th>Estado</th></tr>
+            <tr><th>#</th><th>Local</th><th>L/E/V</th><th>Visitante</th><th>Estado</th></tr>
           </thead>
           <tbody id="contingencyMatchesBody"></tbody>
         </table>
@@ -5107,15 +5133,19 @@
         const source = normalizePredictionList(predictionDoc?.predictions, playerName);
         body.innerHTML = roundMatches.map(match => {
           const prediction = source.find(item => item.matchId === match.id);
+          const outcome = prediction?.outcome || getPredictionOutcome(prediction?.home ?? '', prediction?.away ?? '');
           return `<tr>
             <td>#${match.id}</td>
-            <td><div class="prediction-team-cell">${renderTeam(match.home)}${renderRecentTeamForm(match.home)}</div></td>
-            <td><div class="score-inputs">
-              <input type="number" min="0" max="99" id="cont-home-${match.id}" value="${prediction?.home ?? ''}" aria-label="Goles local">
-              <span>-</span>
-              <input type="number" min="0" max="99" id="cont-away-${match.id}" value="${prediction?.away ?? ''}" aria-label="Goles visitante">
+            <td>${renderTeam(match.home)}</td>
+            <td><div class="prediction-outcome" data-contingency-outcome="${match.id}" aria-label="Pronóstico de contingencia">
+              <input type="hidden" id="cont-home-${match.id}" value="${prediction?.home ?? ''}">
+              <input type="hidden" id="cont-away-${match.id}" value="${prediction?.away ?? ''}">
+              ${['L', 'E', 'V'].map(value => {
+                const colorClass = value === 'L' ? 'outcome-local' : value === 'E' ? 'outcome-draw' : 'outcome-visitor';
+                return `<button type="button" class="prediction-outcome-button ${colorClass} ${outcome === value ? 'active' : ''}" onclick="selectContingencyOutcome(${match.id}, '${value}')" aria-pressed="${outcome === value}">${value}</button>`;
+              }).join('')}
             </div></td>
-            <td><div class="prediction-team-cell">${renderTeam(match.away)}${renderRecentTeamForm(match.away)}</div></td>
+            <td>${renderTeam(match.away)}</td>
             <td>${getPredictionBlockedReason(match) || 'Disponible'}</td>
           </tr>`;
         }).join('');
@@ -5124,6 +5154,21 @@
         body.innerHTML = '<tr><td colspan="5">No se pudieron cargar los pronósticos.</td></tr>';
         if (status) status.innerText = getFirestoreErrorMessage(error, 'cargar contingencia');
       }
+    }
+
+    function selectContingencyOutcome(matchId, outcome) {
+      const homeInput = document.getElementById(`cont-home-${matchId}`);
+      const awayInput = document.getElementById(`cont-away-${matchId}`);
+      const container = document.querySelector(`[data-contingency-outcome="${matchId}"]`);
+      if (!homeInput || !awayInput || !container) return;
+      const defaults = outcome === 'L' ? [1, 0] : outcome === 'V' ? [0, 1] : [0, 0];
+      homeInput.value = defaults[0];
+      awayInput.value = defaults[1];
+      container.querySelectorAll('.prediction-outcome-button').forEach(button => {
+        const active = button.textContent.trim() === outcome;
+        button.classList.toggle('active', active);
+        button.setAttribute('aria-pressed', String(active));
+      });
     }
 
     async function saveContingencyPredictions() {
@@ -5152,13 +5197,14 @@
         }
         const home = Number(homeText);
         const away = Number(awayText);
+        const outcome = getPredictionOutcome(home, away);
         if (!Number.isInteger(home) || !Number.isInteger(away) || home < 0 || away < 0) {
           if (status) status.innerText = `Resultado inválido en el partido #${match.id}.`;
           return;
         }
         const existing = updated.find(item => item.matchId === match.id);
-        if (existing) Object.assign(existing, { player: playerName, home, away });
-        else updated.push({ player: playerName, matchId: match.id, home, away });
+        if (existing) Object.assign(existing, { player: playerName, home, away, outcome });
+        else updated.push({ player: playerName, matchId: match.id, home, away, outcome });
       }
 
       try {
