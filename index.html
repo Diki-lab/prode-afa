@@ -2361,7 +2361,7 @@
           <div>
             <div class="dashboard-icon">📅</div>
             <h3>Fixture</h3>
-            <p>Las 16 fechas del Torneo Apertura 2026.</p>
+            <p>Las 16 fechas del Torneo Clausura 2026.</p>
           </div>
           <button class="primary btn-blue" onclick="showTab('fixture')">Ver Fixture ›</button>
         </div>
@@ -2771,12 +2771,12 @@
       <div class="card">
         <div class="rules-header">
           <h2>&#128203; Reglamento y Puntajes</h2>
-          <p class="rules-subtitle">2026 · Liga Profesional · Torneo Apertura</p>
+          <p class="rules-subtitle">2026 · Liga Profesional · Torneo Clausura</p>
         </div>
 
         <div class="rules-section">
           <h3>Cómo jugar</h3>
-          <p>Para participar elegí L si gana el local, E si empatan o V si gana el visitante. No es obligatorio completar todos los partidos de una vez: cada pronóstico puede guardarse por separado.</p>
+          <p>Para participar elegí L si gana el local, E si empatan o V si gana el visitante. No es obligatorio completar todos los partidos de una vez: podés elegir varios resultados y guardarlos juntos con el botón Guardar pronósticos.</p>
         </div>
 
         <div class="rules-section">
@@ -2805,11 +2805,11 @@
         </div>
 
         <div class="rules-section">
-          <h3>Estados recientes</h3>
+          <h3>Estados del pronóstico</h3>
           <div class="rules-result-legend">
-            <span class="result-chip"><span class="result-letter win">G</span> Ganó</span>
-            <span class="result-chip"><span class="result-letter draw">E</span> Empató</span>
-            <span class="result-chip"><span class="result-letter loss">P</span> Perdió</span>
+            <span class="result-chip"><span class="result-letter win">L</span> Gana el local</span>
+            <span class="result-chip"><span class="result-letter draw">E</span> Empate</span>
+            <span class="result-chip"><span class="result-letter loss">V</span> Gana el visitante</span>
           </div>
         </div>
 
@@ -2820,7 +2820,7 @@
 
         <div class="rules-section">
           <h3>Ganador del Prode</h3>
-          <p>Gana el jugador que acumule más puntos al finalizar el Torneo Apertura 2026.</p>
+          <p>Gana el jugador que acumule más puntos al finalizar el Torneo Clausura 2026.</p>
         </div>
       </div>
     </section>
@@ -5575,7 +5575,7 @@
               ${table.map((row, index) => `
                 <tr class="${index < 8 ? 'playoff-qualified' : ''}">
                   <td><span class="match-number">${index + 1}</span></td>
-                  <td class="group-table-team">${renderTeam(row.team)}${renderRecentTeamForm(row.team)}</td>
+                  <td class="group-table-team">${renderTeam(row.team)}</td>
                   <td><span class="points-badge">${row.points}</span></td>
                   <td>${row.played}</td>
                   <td>${row.won}</td>
