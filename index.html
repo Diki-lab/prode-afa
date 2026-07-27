@@ -715,9 +715,9 @@
       color: var(--muted);
     }
 
-    .real-outcome-badge.local { background: #dff5e7; color: #087443; border-color: #9bd4b3; }
-    .real-outcome-badge.draw { background: #fff0d8; color: #9a5b00; border-color: #efc477; }
-    .real-outcome-badge.visitor { background: #e3edff; color: #174ea6; border-color: #a9c3f5; }
+    .real-outcome-badge.local { background: #35a853; color: #ffffff; border-color: #25823d; }
+    .real-outcome-badge.draw { background: #f0a437; color: #231600; border-color: #cf8120; }
+    .real-outcome-badge.visitor { background: #d84a4a; color: #ffffff; border-color: #b92f2f; }
 
     .deadline-badge {
       display: inline-flex;
@@ -805,6 +805,173 @@
     .fixture-date-title {
       display: block;
       padding: 4px 0;
+    }
+
+    .prediction-date-header,
+    .prediction-bulk-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .prediction-bulk-toolbar {
+      margin: 14px 0;
+      padding: 12px 14px;
+      background: color-mix(in srgb, var(--primary) 8%, var(--card));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .prediction-pending-count {
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .prediction-bulk-title {
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .prediction-bulk-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .prediction-bulk-save-button {
+      min-width: 190px;
+    }
+
+    .prediction-date-total {
+      margin-left: 8px;
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .prediction-day-status {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-transform: none;
+      letter-spacing: normal;
+      font-size: 12px;
+    }
+
+    .prediction-day-state {
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-weight: 900;
+    }
+
+    .prediction-day-state.open {
+      background: var(--success-soft);
+      color: var(--success-text);
+    }
+
+    .prediction-day-state.closed {
+      background: var(--danger-soft);
+      color: var(--danger-text);
+    }
+
+    .prediction-day-state.pending {
+      background: var(--warning-soft);
+      color: var(--warning-text);
+    }
+
+    .prediction-day-next-close {
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .fixture-results-summary {
+      float: right;
+      padding: 5px 10px;
+      border-radius: 999px;
+      background: var(--warning-soft);
+      color: var(--warning-text);
+      font-size: 12px;
+      font-weight: 900;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+
+    .fixture-results-summary.finished {
+      background: var(--success-soft);
+      color: var(--success-text);
+    }
+
+    #fixtureTable th:nth-child(4),
+    #fixtureTable th:nth-child(5),
+    #fixtureTable td:nth-child(4),
+    #fixtureTable td:nth-child(5) {
+      text-align: center;
+    }
+
+    #fixtureTable td:nth-child(4) .score-input,
+    #fixtureTable td:nth-child(5) .score-input {
+      display: block;
+      margin: 0 auto;
+    }
+
+    .prediction-legend {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      margin-top: 18px;
+      padding: 14px;
+      background: color-mix(in srgb, var(--primary) 7%, var(--card));
+      border: 1px solid var(--border);
+      border-radius: 14px;
+    }
+
+    .prediction-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+    }
+
+    .prediction-legend-item + .prediction-legend-item {
+      border-left: 1px solid var(--border);
+    }
+
+    .prediction-legend-letter {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      flex: 0 0 42px;
+      border-radius: 50%;
+      color: #fff;
+      font-weight: 900;
+    }
+
+    .prediction-legend-letter.local { background: #35a853; }
+    .prediction-legend-letter.draw { background: #f0a437; color: #231600; }
+    .prediction-legend-letter.visitor { background: #d84a4a; }
+
+    .prediction-legend-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .prediction-legend-copy small {
+      color: var(--muted);
+    }
+
+    .prediction-save-help {
+      margin: 14px 0 0;
+      color: var(--muted);
+      text-align: center;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .prediction-save-help strong {
+      color: var(--success-text);
     }
 
     .group-table {
@@ -1638,6 +1805,27 @@
         overflow-x: hidden;
       }
 
+      .prediction-bulk-toolbar,
+      .prediction-bulk-actions,
+      .prediction-date-header,
+      .prediction-day-status {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .prediction-bulk-save-button {
+        width: 100%;
+      }
+
+      .prediction-legend {
+        grid-template-columns: 1fr;
+      }
+
+      .prediction-legend-item + .prediction-legend-item {
+        border-left: 0;
+        border-top: 1px solid var(--border);
+      }
+
       header {
         padding: 82px 12px 28px;
         text-align: center;
@@ -2273,11 +2461,9 @@
         </div>
       </div>
       <div class="card table-wrap">
-        <table>
+        <table id="fixtureTable">
           <thead>
             <tr>
-              <th>#</th>
-              <th>Fecha</th>
               <th>Hora</th>
               <th>Grupo/Fase</th>
               <th>Local</th>
@@ -2285,7 +2471,6 @@
               <th>GV</th>
               <th>Estado real</th>
               <th>Visitante</th>
-              <th>Cierre</th>
             </tr>
           </thead>
           <tbody id="fixtureBody"></tbody>
@@ -2344,6 +2529,13 @@
             <input id="predictionSearchMatch" oninput="renderPredictions()" placeholder="Ej: Boca, River..." />
           </div>
         </div>
+        <div class="prediction-bulk-toolbar">
+          <strong id="predictionBulkTitle" class="prediction-bulk-title">Pronósticos</strong>
+          <div class="prediction-bulk-actions">
+            <span id="predictionPendingCount" class="prediction-pending-count">0 cambios sin guardar</span>
+            <button id="predictionBulkSaveButton" class="primary prediction-save-button prediction-bulk-save-button" onclick="saveVisiblePredictionChanges()" disabled>Guardar pronósticos</button>
+          </div>
+        </div>
         <table id="predictionsTable">
           <thead id="predictionsHead">
             <tr>
@@ -2356,6 +2548,21 @@
           </thead>
           <tbody id="predictionsBody"></tbody>
         </table>
+        <div class="prediction-legend" aria-label="Significado de los pronósticos">
+          <div class="prediction-legend-item">
+            <span class="prediction-legend-letter local">L</span>
+            <span class="prediction-legend-copy"><strong>Local</strong><small>Gana el equipo local</small></span>
+          </div>
+          <div class="prediction-legend-item">
+            <span class="prediction-legend-letter draw">E</span>
+            <span class="prediction-legend-copy"><strong>Empate</strong><small>Empatan los equipos</small></span>
+          </div>
+          <div class="prediction-legend-item">
+            <span class="prediction-legend-letter visitor">V</span>
+            <span class="prediction-legend-copy"><strong>Visitante</strong><small>Gana el equipo visitante</small></span>
+          </div>
+        </div>
+        <p class="prediction-save-help">💾 Tu selección queda pendiente hasta presionar <strong>Guardar pronósticos</strong>.</p>
       </div>
 
       <div id="matchPredictionsOverlay" class="match-predictions-overlay" role="dialog" aria-modal="true" aria-labelledby="matchPredictionsTitle" onclick="handleMatchPredictionsOverlayClick(event)">
@@ -3317,6 +3524,37 @@
       return `<span class="deadline-badge ${badge.cssClass}" data-deadline-match="${match.id}" data-deadline-compact="${compact}" title="${escapeHtml(badge.text)}">${escapeHtml(compact ? badge.shortText : badge.text)}</span>`;
     }
 
+    function getPredictionDayStatus(matches, now = new Date()) {
+      const nextMatch = [...matches]
+        .filter(match => isPredictionEditableForMatch(match, now))
+        .sort(compareFixtureMatches)[0];
+      if (nextMatch) {
+        const badge = getDeadlineBadgeData(nextMatch, now);
+        const remaining = badge.text.replace(/^Abierto · cierra en /, '');
+        return {
+          cssClass: 'open',
+          state: '✓ Abierta',
+          detail: `🕘 Próximo cierre en ${remaining}`,
+          matchId: nextMatch.id
+        };
+      }
+
+      const hasPendingSchedule = matches.some(match =>
+        getPredictionBlockedReason(match, now) === 'Programación pendiente'
+      );
+      return hasPendingSchedule
+        ? { cssClass: 'pending', state: 'Programación pendiente', detail: '', matchId: 0 }
+        : { cssClass: 'closed', state: 'Cerrada', detail: '', matchId: 0 };
+    }
+
+    function renderPredictionDayStatus(matches) {
+      const status = getPredictionDayStatus(matches);
+      return `<span class="prediction-day-status">
+        <span class="prediction-day-state ${status.cssClass}">${escapeHtml(status.state)}</span>
+        ${status.detail ? `<span class="prediction-day-next-close" data-prediction-day-next-match="${status.matchId}">${escapeHtml(status.detail)}</span>` : ''}
+      </span>`;
+    }
+
     function updatePredictionCountdownLabels(now = new Date()) {
       document.querySelectorAll('[data-deadline-match]').forEach(element => {
         const matchId = Number(element.getAttribute('data-deadline-match'));
@@ -3327,6 +3565,16 @@
         element.className = `deadline-badge ${badge.cssClass}`;
         element.textContent = compact ? badge.shortText : badge.text;
         element.title = badge.text;
+      });
+      document.querySelectorAll('[data-prediction-day-next-match]').forEach(element => {
+        const matchId = Number(element.getAttribute('data-prediction-day-next-match'));
+        const match = getPredictionMatches().find(item => item.id === matchId);
+        if (!match) return;
+        const badge = getDeadlineBadgeData(match, now);
+        const remaining = badge.text.replace(/^Abierto · cierra en /, '');
+        element.textContent = badge.cssClass === 'open'
+          ? `🕘 Próximo cierre en ${remaining}`
+          : badge.text;
       });
     }
 
@@ -4227,6 +4475,13 @@
       return weekday ? `${stage} (${weekday} - ${match.date})` : stage;
     }
 
+    function getPredictionDayHeaderTitle(match) {
+      const weekday = getFixtureWeekdayName(match?.date);
+      return weekday && match?.date
+        ? `${weekday} ${match.date}`
+        : getFixtureStageDisplayName(match);
+    }
+
     function compareFixtureMatches(a, b) {
       const dateA = parseFixtureDate(a.date);
       const dateB = parseFixtureDate(b.date);
@@ -4432,6 +4687,18 @@
       return `<span class="real-outcome-badge ${cssClass}" title="${label}" aria-label="${label}">${outcome}</span>`;
     }
 
+    function renderFixtureResultsSummary(dayMatches) {
+      const finished = dayMatches.filter(hasOfficialResult).length;
+      const total = dayMatches.length;
+      if (finished === total && total > 0) {
+        return '<span class="fixture-results-summary finished">✓ Jornada finalizada</span>';
+      }
+      const label = finished > 0
+        ? `${finished} de ${total} finalizados`
+        : 'Resultados pendientes';
+      return `<span class="fixture-results-summary">${label}</span>`;
+    }
+
     function renderFixture() {
       renderDates();
       renderGroups();
@@ -4440,25 +4707,30 @@
       const selectedGroup = document.getElementById('filterGroup').value;
       const selectedDate = document.getElementById('filterDate').value;
       let previousHeader = '';
-      const rows = matches
+      const filteredMatches = matches
         .filter(match =>
           (!selectedGroup || getMatchZoneName(match) === selectedGroup)
           && (!selectedDate || getPredictionStageName(match) === selectedDate)
           && `${match.home} ${match.away}`.toLowerCase().includes(query)
         )
-        .sort(compareFixtureMatches)
+        .sort(compareFixtureMatches);
+      const matchesByHeader = filteredMatches.reduce((groups, match) => {
+        const title = getFixtureHeaderTitle(match);
+        if (!groups[title]) groups[title] = [];
+        groups[title].push(match);
+        return groups;
+      }, {});
+      const rows = filteredMatches
         .map(match => {
           const headerTitle = getFixtureHeaderTitle(match);
           const headerRow = headerTitle !== previousHeader
-            ? `<tr class="fixture-date-row"><td colspan="10"><span class="fixture-date-title">${escapeHtml(headerTitle)}</span></td></tr>`
+            ? `<tr class="fixture-date-row"><td colspan="7"><span class="fixture-date-title">${escapeHtml(headerTitle)}${renderFixtureResultsSummary(matchesByHeader[headerTitle] || [])}</span></td></tr>`
             : '';
           previousHeader = headerTitle;
 
           return `
             ${headerRow}
             <tr>
-              <td><span class="match-number">${match.id}</span></td>
-              <td>${escapeHtml(match.date || 'Pendiente')}</td>
               <td>${escapeHtml(match.time || '—')}</td>
               <td><span class="group-badge">${escapeHtml(match.group)}</span></td>
               <td>${renderTeam(match.home)}</td>
@@ -4466,7 +4738,6 @@
               <td><input class="score-input" type="number" min="0" value="${escapeHtml(match.awayGoals)}" ${(!isAdmin || isResultLocked) ? 'disabled' : ''} onchange="updateResult(${match.id}, 'awayGoals', this.value)"></td>
               <td>${renderRealMatchOutcome(match)}</td>
               <td>${renderTeam(match.away)}</td>
-              <td>${renderDeadlineBadge(match)}</td>
             </tr>
           `;
         })
@@ -4603,6 +4874,97 @@
       editingPredictionRows[matchId] = false;
       setPredictionStatus('Pronostico guardado.', false);
       renderAll();
+    }
+
+    async function savePredictionGroup(matchIds) {
+      if (!requireAuth('guardar pronosticos')) return;
+      const player = currentProfileName;
+      const selected = [];
+
+      for (const matchId of matchIds) {
+        const match = getPredictionMatches().find(item => item.id === matchId);
+        if (!isPredictionEditableForMatch(match)) {
+          const reason = getPredictionBlockedReason(match) || 'Pronóstico cerrado';
+          setPredictionStatus(`${reason}: no se pudo guardar el grupo.`, true);
+          renderAll();
+          return;
+        }
+
+        const homeRaw = document.getElementById(`predictionHome-${matchId}`)?.value ?? '';
+        const awayRaw = document.getElementById(`predictionAway-${matchId}`)?.value ?? '';
+        const outcome = getPredictionOutcome(homeRaw, awayRaw);
+        if (!player || !outcome) {
+          setPredictionStatus(`Elegí L, E o V para ${match.home} vs ${match.away} antes de guardar el grupo.`, true);
+          return;
+        }
+
+        selected.push({
+          matchId,
+          home: Number(homeRaw),
+          away: Number(awayRaw),
+          outcome
+        });
+      }
+
+      selected.forEach(item => {
+        const existing = predictions.find(prediction =>
+          prediction.player === player && prediction.matchId === item.matchId
+        );
+        if (existing) {
+          existing.home = item.home;
+          existing.away = item.away;
+          existing.outcome = item.outcome;
+        } else {
+          predictions.push({ player, ...item });
+        }
+      });
+
+      localStorage.setItem(STORAGE_KEYS.predictions, JSON.stringify(predictions));
+      const saved = await saveCurrentUserPredictions();
+      if (!saved) return;
+      selected.forEach(item => {
+        editingPredictionRows[item.matchId] = false;
+      });
+      setPredictionStatus(`${selected.length} pronósticos guardados juntos.`, false);
+      renderAll();
+    }
+
+    function getVisiblePredictionChanges() {
+      return getFilteredPredictionMatches().filter(match => {
+        if (!isPredictionEditableForMatch(match)) return false;
+        const homeRaw = document.getElementById(`predictionHome-${match.id}`)?.value ?? '';
+        const awayRaw = document.getElementById(`predictionAway-${match.id}`)?.value ?? '';
+        const currentOutcome = getPredictionOutcome(homeRaw, awayRaw);
+        if (!currentOutcome) return false;
+        const savedPrediction = getPredictionForMatch(match, predictions);
+        const savedOutcome = savedPrediction
+          ? getPredictionOutcome(savedPrediction.home, savedPrediction.away)
+          : '';
+        return currentOutcome !== savedOutcome;
+      }).map(match => match.id);
+    }
+
+    function updatePredictionBulkToolbar() {
+      const changedIds = getVisiblePredictionChanges();
+      const count = changedIds.length;
+      const filters = getPredictionFilters();
+      const title = document.getElementById('predictionBulkTitle');
+      const countLabel = document.getElementById('predictionPendingCount');
+      const saveButton = document.getElementById('predictionBulkSaveButton');
+      if (title) title.innerText = filters.date || 'Todos los pronósticos';
+      if (countLabel) {
+        countLabel.innerText = `${count} ${count === 1 ? 'cambio' : 'cambios'} sin guardar`;
+      }
+      if (saveButton) saveButton.disabled = count === 0;
+    }
+
+    async function saveVisiblePredictionChanges() {
+      const changedIds = getVisiblePredictionChanges();
+      if (!changedIds.length) {
+        setPredictionStatus('No hay cambios para guardar.', false);
+        return;
+      }
+      await savePredictionGroup(changedIds);
     }
 
     function editPredictionRow(matchId) {
@@ -4907,6 +5269,7 @@
         awayInput.value = defaults[1];
       }
       updatePredictionOutcomeButtons(matchId);
+      updatePredictionBulkToolbar();
     }
 
     function renderPredictions() {
@@ -4930,7 +5293,12 @@
       }
 
       const rows = filteredMatches.map(match => ({ match, prediction: getPredictionForMatch(match, predictions) }));
-
+      const matchesByDay = rows.reduce((groups, row) => {
+        const title = getPredictionDayHeaderTitle(row.match);
+        if (!groups[title]) groups[title] = [];
+        groups[title].push(row.match);
+        return groups;
+      }, {});
       let previousHeaderTitle = '';
       document.getElementById('predictionsBody').innerHTML = rows.map(row => {
         const { match, prediction } = row;
@@ -4950,30 +5318,28 @@
         `;
         let rowAction = '';
 
-        if (showInputs) {
-          rowAction = `<button class="primary prediction-save-button" data-prediction-row-save onclick="savePredictionRow(${match.id})">Guardar</button>`;
-        } else if (hasPrediction) {
+        if (hasPrediction && !showInputs) {
           rowAction = '<span class="saved-badge">Guardado ✓</span>';
           if (canEdit) {
             rowAction += `<button class="secondary-action" onclick="editPredictionRow(${match.id})">Editar</button>`;
           }
         }
         if (canViewDetails) {
-          rowAction += `<button class="secondary-action prediction-view-button" title="Ver pronósticos del partido" onclick="openMatchPredictionsModal(${match.id})">Ver</button>`;
+          rowAction += `<button class="secondary-action prediction-view-button" title="Ver pronósticos del partido" aria-label="Ver pronósticos del partido" onclick="openMatchPredictionsModal(${match.id})">👁 Ver</button>`;
         }
 
-        const headerTitle = getFixtureHeaderTitle(match);
+        const headerTitle = getPredictionDayHeaderTitle(match);
+        const dayMatches = matchesByDay[headerTitle] || [];
+        const dayTotal = dayMatches.length;
         const dateHeader = headerTitle !== previousHeaderTitle
-          ? `<tr class="fixture-date-row"><td colspan="7"><span class="fixture-date-title">${escapeHtml(headerTitle)}</span></td></tr>`
+          ? `<tr class="fixture-date-row"><td colspan="7"><div class="prediction-date-header"><span class="fixture-date-title">📅 ${escapeHtml(headerTitle)} <span class="prediction-date-total">${dayTotal} ${dayTotal === 1 ? 'partido' : 'partidos'}</span></span>${renderPredictionDayStatus(dayMatches)}</div></td></tr>`
           : '';
         previousHeaderTitle = headerTitle;
 
         return `${dateHeader}
           <tr>
             <td><div class="prediction-date-time">
-              <strong>${escapeHtml(getPredictionDateFilterLabel(match))}</strong>
-              <small>${escapeHtml(match.date || 'Fecha pendiente')} · ${escapeHtml(match.time || 'Hora pendiente')}</small>
-              ${renderDeadlineBadge(match)}
+              <strong>🕘 ${escapeHtml(match.time || 'Hora pendiente')}</strong>
             </div></td>
             <td><span class="group-badge">${escapeHtml(getPredictionGroupPhaseName(match))}</span></td>
             <td>${renderTeam(match.home)}</td>
@@ -4984,6 +5350,7 @@
           </tr>
         `;
       }).join('');
+      updatePredictionBulkToolbar();
 
       const progress = document.getElementById('myPredictionsProgress');
       if (progress) {
