@@ -3158,6 +3158,9 @@
     let editingPredictionRows = {};
     let predictionDeadlineSignature = '';
     const LOCAL_AVATAR_BASE_PATH = 'img/avatars/';
+    const LOCAL_AVATAR_VERSIONS = Object.freeze({
+      leandro: '20260728-1'
+    });
 
     let isResultLocked = JSON.parse(localStorage.getItem(STORAGE_KEYS.resultLock) || 'false');
     let arePredictionsLocked = JSON.parse(localStorage.getItem(STORAGE_KEYS.predictionLock) || 'false');
@@ -3196,7 +3199,9 @@
 
     function getLocalAvatarPath(value) {
       const slug = getAvatarSlug(value);
-      return slug ? `${LOCAL_AVATAR_BASE_PATH}${slug}.jpg` : '';
+      if (!slug) return '';
+      const version = LOCAL_AVATAR_VERSIONS[slug];
+      return `${LOCAL_AVATAR_BASE_PATH}${slug}.jpg${version ? `?v=${version}` : ''}`;
     }
 
     function getLocalAvatarPathFromProfile(profile = {}) {
