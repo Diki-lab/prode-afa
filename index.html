@@ -762,7 +762,8 @@
 
     #contingencyTable th:first-child,
     #contingencyTable td:first-child {
-      width: 54px;
+      width: 90px;
+      white-space: nowrap;
     }
 
     #contingencyTable th:nth-child(3),
@@ -2704,7 +2705,7 @@
       <div class="card table-wrap admin-only">
         <table id="contingencyTable">
           <thead>
-            <tr><th>#</th><th>Local</th><th>L/E/V</th><th>Visitante</th><th>Estado</th></tr>
+            <tr><th>Hora</th><th>Local</th><th>L/E/V</th><th>Visitante</th><th>Estado</th></tr>
           </thead>
           <tbody id="contingencyMatchesBody"></tbody>
         </table>
@@ -5640,7 +5641,9 @@
 
       const profile = registeredUserProfiles.find(item => item.uid === playerSelect.value);
       const round = dateSelect.value || 'Fecha 1';
-      const roundMatches = getPredictionMatches().filter(match => getPredictionStageName(match) === round);
+      const roundMatches = getPredictionMatches()
+        .filter(match => getPredictionStageName(match) === round)
+        .sort(compareFixtureMatches);
       if (!profile) {
         body.innerHTML = '<tr><td colspan="5" class="muted">Seleccioná un jugador registrado.</td></tr>';
         if (status) status.innerText = `${round}: ${roundMatches.length} partidos.`;
@@ -5651,11 +5654,24 @@
         const predictionDoc = await window.prodeFirebase.loadUserPredictions(profile.uid);
         const playerName = getRegisteredPlayerName(profile);
         const source = normalizePredictionList(predictionDoc?.predictions, playerName);
+        const matchesByDay = roundMatches.reduce((groups, match) => {
+          const title = getPredictionDayHeaderTitle(match);
+          if (!groups[title]) groups[title] = [];
+          groups[title].push(match);
+          return groups;
+        }, {});
+        let previousHeaderTitle = '';
         body.innerHTML = roundMatches.map(match => {
           const prediction = source.find(item => item.matchId === match.id);
           const outcome = prediction?.outcome || getPredictionOutcome(prediction?.home ?? '', prediction?.away ?? '');
-          return `<tr>
-            <td>#${match.id}</td>
+          const headerTitle = getPredictionDayHeaderTitle(match);
+          const dayTotal = matchesByDay[headerTitle]?.length || 0;
+          const dateHeader = headerTitle !== previousHeaderTitle
+            ? `<tr class="fixture-date-row"><td colspan="5"><span class="fixture-date-title">📅 ${escapeHtml(headerTitle)} <span class="prediction-date-total">${dayTotal} ${dayTotal === 1 ? 'partido' : 'partidos'}</span></span></td></tr>`
+            : '';
+          previousHeaderTitle = headerTitle;
+          return `${dateHeader}<tr>
+            <td>🕘 ${escapeHtml(match.time || 'Pendiente')}</td>
             <td>${renderTeam(match.home)}</td>
             <td><div class="prediction-outcome" data-contingency-outcome="${match.id}" aria-label="Pronóstico de contingencia">
               <input type="hidden" id="cont-home-${match.id}" value="${prediction?.home ?? ''}">
