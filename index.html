@@ -3100,7 +3100,17 @@
         return applyOfficialMatchTimes(defaultMatches);
       }
 
-      return normalizedMatches;
+      return normalizedMatches.map(match => {
+        const officialMatch = defaultMatches.find(expected => expected.id === Number(match?.id));
+        if (!officialMatch?.timeConfirmed) return match;
+        return {
+          ...match,
+          date: officialMatch.date,
+          time: officialMatch.time,
+          timeConfirmed: true,
+          kickoff: officialMatch.kickoff
+        };
+      });
     }
 
     function countMatchesByDate(matchList, date) {
@@ -4203,10 +4213,17 @@
           let fixtureWasMigrated = false;
           if (Array.isArray(cloudData.players)) players = cloudData.players;
           if (Array.isArray(cloudData.matches)) {
-            fixtureWasMigrated = cloudData.matches.some((match, index) =>
-              match?.home !== defaultMatches[index]?.home || match?.away !== defaultMatches[index]?.away
-            );
             matches = resolveMatchesData(cloudData.matches);
+            fixtureWasMigrated = matches.some(match => {
+              const cloudMatch = cloudData.matches.find(item => Number(item?.id) === Number(match?.id));
+              return !cloudMatch
+                || cloudMatch.home !== match.home
+                || cloudMatch.away !== match.away
+                || cloudMatch.date !== match.date
+                || cloudMatch.time !== match.time
+                || cloudMatch.timeConfirmed !== match.timeConfirmed
+                || cloudMatch.kickoff !== match.kickoff;
+            });
           }
           const legacyPredictions = normalizePredictionList(cloudData.predictions);
           legacyRankingPredictions = legacyPredictions;
@@ -6208,8 +6225,15 @@
       assertTest('cada fecha tiene 15 partidos', Array.from({ length: 16 }, (_, index) =>
         defaultMatches.filter(match => match.group.startsWith(`Fecha ${index + 1} `)).length
       ).every(total => total === 15));
-      assertTest('primeras tres fechas tienen programación oficial', defaultMatches.filter(match => match.date && match.time && match.kickoff).length === 45);
-      assertTest('fechas posteriores esperan programación oficial', defaultMatches.slice(45).every(match => !match.date && !match.time && !match.kickoff));
+      assertTest('primeras cuatro fechas tienen programación oficial', defaultMatches.filter(match => match.date && match.time && match.kickoff).length === 60);
+      assertTest('fechas posteriores esperan programación oficial', defaultMatches.slice(60).every(match => !match.date && !match.time && !match.kickoff));
+      const storedFixtureWithoutFecha4Times = defaultMatches.map(match => match.group.startsWith('Fecha 4 ')
+        ? { ...match, date: '', time: '', timeConfirmed: false, kickoff: '' }
+        : match
+      );
+      assertTest('fixture guardado incorpora programación oficial nueva', resolveMatchesData(storedFixtureWithoutFecha4Times)
+        .filter(match => match.group.startsWith('Fecha 4 '))
+        .every(match => match.date && match.time && match.timeConfirmed && match.kickoff));
       assertTest('fallback usa fixture oficial cuando está incompleto', resolveMatchesData(defaultMatches.slice(0, 100)).length === 240);
       assertTest('Fecha 1 incluye Defensa-Aldosivi', defaultMatches.some(match =>
         match.group.startsWith('Fecha 1 ') && match.home === 'Defensa y Justicia' && match.away === 'Aldosivi'
