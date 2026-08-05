@@ -1439,6 +1439,7 @@
     .result-letter.win { background: #35a853; }
     .result-letter.draw { background: #f0a437; }
     .result-letter.loss { background: #d84a4a; }
+    .accuracy-badge { display: inline-flex; min-width: 54px; justify-content: center; padding: 6px 9px; border-radius: 999px; color: #fff; font-weight: 1000; box-shadow: inset 0 0 0 1px rgba(255,255,255,.16); }
     .recent-form { display: inline-flex; gap: 3px; margin-left: 8px; vertical-align: middle; }
     .recent-form-mark { width: 19px; height: 19px; display: inline-grid; place-items: center; border-radius: 5px; color: #fff; font-size: 10px; font-weight: 1000; }
     .recent-form-mark.win { background: #35a853; }
@@ -2625,6 +2626,9 @@
               <th>Posición</th>
               <th>Jugador</th>
               <th>Puntos</th>
+              <th>Total partidos</th>
+              <th>Partidos S/C</th>
+              <th>% acierto</th>
             </tr>
           </thead>
           <tbody id="rankingBody"></tbody>
@@ -5398,25 +5402,44 @@
 
     function getRankingTotals() {
       const sourcePredictions = dedupePredictionList(applyPredictionSanctions(rankingPredictions.length ? rankingPredictions : predictions));
+      const finishedMatches = getPredictionMatches().filter(hasOfficialResult);
       const rankingPlayers = [...new Set([
         ...players,
         ...sourcePredictions.map(prediction => prediction.player).filter(Boolean)
       ])];
 
       return rankingPlayers
-        .map(player => ({
-          player,
-          points: sourcePredictions
-            .filter(prediction => prediction.player === player)
-            .reduce((sum, prediction) => sum + pointsFor(prediction), 0)
-        }))
+        .map(player => {
+          const playerPredictions = sourcePredictions.filter(prediction => prediction.player === player);
+          const predictionsByMatch = new Map(playerPredictions.map(prediction => [Number(prediction.matchId), prediction]));
+          const loadedFinished = finishedMatches.filter(match => {
+            const prediction = predictionsByMatch.get(Number(match.id));
+            return prediction && Boolean(prediction.outcome || getPredictionOutcome(prediction.home, prediction.away));
+          });
+          const points = playerPredictions.reduce((sum, prediction) => sum + pointsFor(prediction), 0);
+          const totalMatches = finishedMatches.length;
+          return {
+            player,
+            points,
+            totalMatches,
+            unloadedMatches: totalMatches - loadedFinished.length,
+            accuracy: totalMatches ? Math.round((points / totalMatches) * 100) : 0
+          };
+        })
         .sort((a, b) => b.points - a.points || a.player.localeCompare(b.player));
     }
 
     function renderRanking() {
       const totals = getRankingTotals();
+      const accuracyValues = totals.map(row => row.accuracy);
+      const minAccuracy = accuracyValues.length ? Math.min(...accuracyValues) : 0;
+      const maxAccuracy = accuracyValues.length ? Math.max(...accuracyValues) : 0;
       document.getElementById('rankingBody').innerHTML = totals.map((row, index) => {
         const medal = ['🥇', '🥈', '🥉'][index] || index + 1;
+        const accuracyRatio = maxAccuracy === minAccuracy
+          ? 0.5
+          : (row.accuracy - minAccuracy) / (maxAccuracy - minAccuracy);
+        const accuracyHue = Math.round(accuracyRatio * 120);
         return `
           <tr>
             <td><span class="rank-medal">${medal}</span></td>
@@ -5427,6 +5450,9 @@
               </span>
             </td>
             <td><span class="points-badge">${row.points}</span></td>
+            <td>${row.totalMatches}</td>
+            <td>${row.unloadedMatches}</td>
+            <td><span class="accuracy-badge" style="background:hsl(${accuracyHue} 68% 40%)" title="Escala relativa del ranking">${row.accuracy}%</span></td>
           </tr>
         `;
       }).join('');
@@ -6357,6 +6383,12 @@
         assertTest('podio muestra avatar local existente', document.getElementById('homePodium').innerHTML.includes('img/avatars/asinderman.jpg'));
         renderRanking();
         assertTest('ranking muestra avatar local existente', document.getElementById('rankingBody').innerHTML.includes('img/avatars/asinderman.jpg'));
+        assertTest('ranking calcula total, S/C y porcentaje', testRankingTotals.every(row =>
+          row.totalMatches === 2
+          && row.unloadedMatches >= 0
+          && row.accuracy >= 0
+          && row.accuracy <= 100
+        ));
         setRegisteredUserProfiles([
           { displayName: 'Lionel Messi', email: 'messi@prode.local', role: 'user', isAdmin: false },
           { displayName: 'Admin Test', email: 'dmcfarlane@prode.local', role: 'admin', isAdmin: true },
