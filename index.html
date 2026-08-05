@@ -1445,6 +1445,8 @@
     .recent-form-mark.draw { background: #f0a437; }
     .recent-form-mark.loss { background: #d84a4a; }
     .recent-form-mark.pending { background: #263754; color: #aebbd2; }
+    .group-table-latest { white-space: nowrap; }
+    .group-table-latest .recent-form { margin-left: 0; }
     .prediction-team-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
     .prediction-team-cell .recent-form { margin-left: 34px; }
 
@@ -5592,6 +5594,7 @@
                 <th>GF</th>
                 <th>GC</th>
                 <th>DG</th>
+                <th>Últimas</th>
               </tr>
             </thead>
             <tbody>
@@ -5607,6 +5610,7 @@
                   <td>${row.goalsFor}</td>
                   <td>${row.goalsAgainst}</td>
                   <td>${row.goalDifference}</td>
+                  <td class="group-table-latest">${renderRecentTeamForm(row.team, true)}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -6259,6 +6263,7 @@
       assertTest('desempate inicial ordena alfabéticamente', emptyLigaTables['Zona A'][0].team === 'Boca Juniors');
       renderLigaTables();
       assertTest('tabla de posiciones usa columna equipo fija', document.getElementById('groupsTablesBody').innerHTML.includes('group-table-team'));
+      assertTest('tabla de posiciones muestra columna Últimas', document.getElementById('groupsTablesBody').innerHTML.includes('<th>Últimas</th>'));
       assertTest('renderTeam no contiene imagen de bandera', !renderTeam('Argentina').includes('<img'));
       assertTest('renderTeam devuelve nombre del equipo', renderTeam('Argentina').includes('Argentina'));
       assertTest('deletePrediction existe', typeof deletePrediction === 'function');
