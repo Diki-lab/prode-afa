@@ -179,7 +179,7 @@ const FIXTURE_APERTURA_2026 = Object.freeze([
   ]}
 ]);
 
-// Programación oficial publicada por la LPF para las fechas 1, 2, 3 y 4
+// Programación oficial publicada por la LPF para las fechas 1 a 5
 // del Torneo Clausura 2026. Las fechas posteriores permanecen pendientes
 // hasta que la Liga confirme día y horario.
 const PROGRAMACION_CLAUSURA_2026 = Object.freeze({
@@ -245,7 +245,23 @@ const PROGRAMACION_CLAUSURA_2026 = Object.freeze({
   'Argentinos Juniors|Racing Club': ['09/08/2026', '20:15'],
   'Banfield|Belgrano': ['10/08/2026', '19:00'],
   'Unión|Central Córdoba': ['10/08/2026', '21:15'],
-  'Talleres|Lanús': ['11/08/2026', '21:00']
+  'Talleres|Lanús': ['11/08/2026', '21:00'],
+
+  'Racing Club|Banfield': ['14/08/2026', '20:30'],
+  'Aldosivi|Tigre': ['15/08/2026', '14:30'],
+  'San Lorenzo|Unión': ['15/08/2026', '14:30'],
+  'Estudiantes de La Plata|Gimnasia de La Plata': ['15/08/2026', '16:45'],
+  "Newell's Old Boys|Deportivo Riestra": ['15/08/2026', '19:00'],
+  'Belgrano|Independiente Rivadavia': ['15/08/2026', '19:00'],
+  'Platense|Boca Juniors': ['15/08/2026', '21:15'],
+  'Sarmiento|Huracán': ['16/08/2026', '15:00'],
+  'River Plate|Argentinos Juniors': ['16/08/2026', '18:00'],
+  'Barracas Central|Rosario Central': ['16/08/2026', '20:15'],
+  'Central Córdoba|Instituto': ['16/08/2026', '20:15'],
+  'Estudiantes de Río Cuarto|Atlético Tucumán': ['17/08/2026', '14:45'],
+  'Lanús|Independiente': ['17/08/2026', '17:00'],
+  'Vélez Sarsfield|Defensa y Justicia': ['17/08/2026', '19:15'],
+  'Gimnasia de Mendoza|Talleres': ['17/08/2026', '21:30']
 });
 
 const FIXTURE_CLAUSURA_2026 = Object.freeze(
