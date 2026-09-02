@@ -6255,14 +6255,14 @@
       assertTest('cada fecha tiene 15 partidos', Array.from({ length: 16 }, (_, index) =>
         defaultMatches.filter(match => match.group.startsWith(`Fecha ${index + 1} `)).length
       ).every(total => total === 15));
-      assertTest('primeras siete fechas tienen programación oficial', defaultMatches.filter(match => match.date && match.time && match.kickoff).length === 105);
-      assertTest('fechas posteriores esperan programación oficial', defaultMatches.slice(105).every(match => !match.date && !match.time && !match.kickoff));
-      const storedFixtureWithoutFecha7Times = defaultMatches.map(match => match.group.startsWith('Fecha 7 ')
+      assertTest('primeras ocho fechas tienen programación oficial', defaultMatches.filter(match => match.date && match.time && match.kickoff).length === 120);
+      assertTest('fechas posteriores esperan programación oficial', defaultMatches.slice(120).every(match => !match.date && !match.time && !match.kickoff));
+      const storedFixtureWithoutFecha8Times = defaultMatches.map(match => match.group.startsWith('Fecha 8 ')
         ? { ...match, date: '', time: '', timeConfirmed: false, kickoff: '' }
         : match
       );
-      assertTest('fixture guardado incorpora programación oficial nueva', resolveMatchesData(storedFixtureWithoutFecha7Times)
-        .filter(match => match.group.startsWith('Fecha 7 '))
+      assertTest('fixture guardado incorpora programación oficial nueva', resolveMatchesData(storedFixtureWithoutFecha8Times)
+        .filter(match => match.group.startsWith('Fecha 8 '))
         .every(match => match.date && match.time && match.timeConfirmed && match.kickoff));
       assertTest('fallback usa fixture oficial cuando está incompleto', resolveMatchesData(defaultMatches.slice(0, 100)).length === 240);
       assertTest('Fecha 1 incluye Defensa-Aldosivi', defaultMatches.some(match =>
