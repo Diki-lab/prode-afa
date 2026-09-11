@@ -179,7 +179,7 @@ const FIXTURE_APERTURA_2026 = Object.freeze([
   ]}
 ]);
 
-// Programación oficial publicada por la LPF para las fechas 1 a 8
+// Programación oficial publicada por la LPF para las fechas 1 a 9
 // del Torneo Clausura 2026. Las fechas posteriores permanecen pendientes
 // hasta que la Liga confirme día y horario.
 const PROGRAMACION_CLAUSURA_2026 = Object.freeze({
@@ -309,7 +309,23 @@ const PROGRAMACION_CLAUSURA_2026 = Object.freeze({
   'River Plate|Independiente Rivadavia': ['06/09/2026', '19:15'],
   'Racing Club|Atlético Tucumán': ['06/09/2026', '21:30'],
   'Barracas Central|Argentinos Juniors': ['07/09/2026', '19:00'],
-  'Unión|Instituto': ['07/09/2026', '21:15']
+  'Unión|Instituto': ['07/09/2026', '21:15'],
+
+  "Newell's Old Boys|Vélez Sarsfield": ['11/09/2026', '17:00'],
+  'Defensa y Justicia|Gimnasia de Mendoza': ['11/09/2026', '19:15'],
+  'Boca Juniors|Central Córdoba': ['11/09/2026', '21:30'],
+  'Independiente Rivadavia|Aldosivi': ['12/09/2026', '14:45'],
+  'Estudiantes de La Plata|Platense': ['12/09/2026', '14:45'],
+  'Atlético Tucumán|River Plate': ['12/09/2026', '17:30'],
+  'Talleres|Unión': ['12/09/2026', '20:00'],
+  'Sarmiento|Belgrano': ['13/09/2026', '14:45'],
+  'Tigre|Rosario Central': ['13/09/2026', '14:45'],
+  'Argentinos Juniors|Gimnasia de La Plata': ['13/09/2026', '17:00'],
+  'Independiente|San Lorenzo': ['13/09/2026', '19:15'],
+  'Huracán|Racing Club': ['13/09/2026', '21:30'],
+  'Deportivo Riestra|Lanús': ['14/09/2026', '19:00'],
+  'Banfield|Barracas Central': ['14/09/2026', '19:00'],
+  'Instituto|Estudiantes de Río Cuarto': ['14/09/2026', '21:15']
 });
 
 const FIXTURE_CLAUSURA_2026 = Object.freeze(
