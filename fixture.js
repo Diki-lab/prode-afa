@@ -344,20 +344,20 @@ const PROGRAMACION_CLAUSURA_2026 = Object.freeze({
   'Lanús|Estudiantes de La Plata': ['21/09/2026', '21:15'],
 
   'Independiente|Instituto': ['02/10/2026', '19:15'],
+  'Boca Juniors|Unión': ['02/10/2026', '21:30'],
   'Independiente Rivadavia|Gimnasia de La Plata': ['02/10/2026', '21:30'],
   'Defensa y Justicia|San Lorenzo': ['03/10/2026', '14:45'],
   'Atlético Tucumán|Barracas Central': ['03/10/2026', '17:00'],
   "Newell's Old Boys|Lanús": ['03/10/2026', '17:00'],
-  'Argentinos Juniors|Tigre': ['03/10/2026', '19:15'],
-  'Huracán|Aldosivi': ['03/10/2026', '21:30'],
+  'Huracán|Aldosivi': ['04/10/2026', '14:45'],
   'Talleres|Belgrano': ['04/10/2026', '17:00'],
-  'Boca Juniors|Unión': ['04/10/2026', '19:15'],
+  'Argentinos Juniors|Tigre': ['04/10/2026', '19:15'],
   'Estudiantes de Río Cuarto|Racing Club': ['04/10/2026', '21:30'],
   'Deportivo Riestra|Central Córdoba': ['05/10/2026', '16:45'],
   'Estudiantes de La Plata|Gimnasia de Mendoza': ['05/10/2026', '19:00'],
   'Vélez Sarsfield|Platense': ['05/10/2026', '19:00'],
   'Banfield|Rosario Central': ['05/10/2026', '21:15'],
-  'Sarmiento|River Plate': ['07/10/2026', '19:30']
+  'Sarmiento|River Plate': ['14/10/2026', '19:00']
 });
 
 const FIXTURE_CLAUSURA_2026 = Object.freeze(
