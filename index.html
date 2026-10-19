@@ -2294,7 +2294,11 @@
       <input id="loginName" placeholder="Nombre visible" style="margin-bottom:14px;display:none">
       <input id="loginUser" type="email" placeholder="usuario@prode.local" style="margin-bottom:6px">
       <div id="authDomainHint" style="color:#687386;font-size:13px;font-weight:700;margin:0 0 14px;">Solo usuarios @prode.local</div>
-      <input id="loginPassword" type="password" placeholder="Contraseña" style="margin-bottom:18px">
+      <input id="loginPassword" type="password" placeholder="Contraseña" style="margin-bottom:6px">
+
+      <div style="text-align:right;margin-bottom:14px;">
+        <button type="button" onclick="showForgotPasswordHelp()" style="background:none;border:none;padding:0;color:#3a86c8;font-size:13px;font-weight:700;text-decoration:underline;cursor:pointer;">¿Olvidaste tu contraseña?</button>
+      </div>
 
       <div class="auth-actions">
         <button id="loginSubmitBtn" class="primary" style="width:100%;" onclick="loginApp()">Ingresar</button>
@@ -3930,6 +3934,10 @@
       if (loginSubmitBtn) loginSubmitBtn.style.display = isRegisterMode ? 'none' : 'block';
       if (registerSubmitBtn) registerSubmitBtn.style.display = isRegisterMode ? 'block' : 'none';
       if (authModeBtn) authModeBtn.innerText = isRegisterMode ? 'Ya tengo cuenta' : 'Registrarme';
+    }
+
+    function showForgotPasswordHelp() {
+      alert('No hay recuperación automática: los usuarios @prode.local no son casillas de correo reales.\n\nContactá al administrador del Prode (David) para que te restablezca el acceso.');
     }
 
     function applyProfile() {
