@@ -411,7 +411,7 @@ const PROGRAMACION_CLAUSURA_2026 = Object.freeze({
   'Huracán|Tigre': ['30/10/2026', '19:00'],
   'Sarmiento|Rosario Central': ['30/10/2026', '21:15'],
   'Racing Club|Aldosivi': ['30/10/2026', '21:15'],
-  'Defensa y Justicia|Independiente': ['31/10/2026', '14:45'],
+  'Defensa y Justicia|Independiente': ['02/11/2026', '19:00'],
   'Deportivo Riestra|Talleres': ['31/10/2026', '17:00'],
   'Vélez Sarsfield|San Lorenzo': ['31/10/2026', '19:15'],
   'Estudiantes de La Plata|Instituto': ['31/10/2026', '21:30'],
