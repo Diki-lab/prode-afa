@@ -834,6 +834,13 @@
       font-weight: 900;
     }
 
+    .prediction-bulk-title-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     .prediction-bulk-actions {
       display: flex;
       align-items: center;
@@ -2538,7 +2545,10 @@
           </div>
         </div>
         <div class="prediction-bulk-toolbar">
-          <strong id="predictionBulkTitle" class="prediction-bulk-title">Pronósticos</strong>
+          <div class="prediction-bulk-title-group">
+            <strong id="predictionBulkTitle" class="prediction-bulk-title">Pronósticos</strong>
+            <span id="predictionBulkTotalPoints" class="points-badge" title="Puntos totales en esta fecha">0 pts</span>
+          </div>
           <div class="prediction-bulk-actions">
             <span id="predictionPendingCount" class="prediction-pending-count">0 cambios sin guardar</span>
             <button id="predictionBulkSaveButton" class="primary prediction-save-button prediction-bulk-save-button" onclick="saveVisiblePredictionChanges()" disabled>Guardar pronósticos</button>
@@ -4986,9 +4996,17 @@
       const count = changedIds.length;
       const filters = getPredictionFilters();
       const title = document.getElementById('predictionBulkTitle');
+      const totalPointsBadge = document.getElementById('predictionBulkTotalPoints');
       const countLabel = document.getElementById('predictionPendingCount');
       const saveButton = document.getElementById('predictionBulkSaveButton');
       if (title) title.innerText = filters.date || 'Todos los pronósticos';
+      if (totalPointsBadge) {
+        const totalPoints = getFilteredPredictionMatches().reduce((sum, match) => {
+          const prediction = getPredictionForMatch(match, predictions);
+          return sum + (prediction ? pointsFor(prediction) : 0);
+        }, 0);
+        totalPointsBadge.innerText = `${totalPoints} ${totalPoints === 1 ? 'pto' : 'pts'}`;
+      }
       if (countLabel) {
         countLabel.innerText = `${count} ${count === 1 ? 'cambio' : 'cambios'} sin guardar`;
       }
