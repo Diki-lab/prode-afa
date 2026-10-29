@@ -1247,6 +1247,17 @@
       object-fit: cover;
     }
 
+    .rank-movement {
+      font-size: 13px;
+      font-weight: 900;
+      display: inline-flex;
+    }
+
+    .rank-movement.rank-up { color: var(--success-text); }
+    .rank-movement.rank-down { color: var(--danger-text); }
+    .rank-movement.rank-same,
+    .rank-movement.rank-new { color: var(--muted); }
+
     .afa-bracket-shell {
       overflow-x: auto;
       padding: 6px 4px 20px;
@@ -2640,6 +2651,7 @@
               <th>Posición</th>
               <th>Jugador</th>
               <th>Puntos</th>
+              <th>Última fecha</th>
               <th>Total partidos</th>
               <th>Partidos S/C</th>
               <th>% acierto</th>
@@ -5426,9 +5438,16 @@
       setPredictionStatus('Los pronósticos consolidados son solo lectura desde Admin.', true);
     }
 
-    function getRankingTotals() {
-      const sourcePredictions = dedupePredictionList(applyPredictionSanctions(rankingPredictions.length ? rankingPredictions : predictions));
-      const finishedMatches = getPredictionMatches().filter(hasOfficialResult);
+    function getRankingTotals(excludeStage = '') {
+      const sourcePredictions = dedupePredictionList(applyPredictionSanctions(rankingPredictions.length ? rankingPredictions : predictions))
+        .filter(prediction => {
+          if (!excludeStage) return true;
+          const match = getPredictionMatches().find(item => item.id === Number(prediction.matchId));
+          return !match || getPredictionStageName(match) !== excludeStage;
+        });
+      const finishedMatches = getPredictionMatches()
+        .filter(hasOfficialResult)
+        .filter(match => !excludeStage || getPredictionStageName(match) !== excludeStage);
       const rankingPlayers = [...new Set([
         ...players,
         ...sourcePredictions.map(prediction => prediction.player).filter(Boolean)
@@ -5455,8 +5474,35 @@
         .sort((a, b) => b.points - a.points || a.player.localeCompare(b.player));
     }
 
+    function getLastFechaWithResults() {
+      const stageNames = [...new Set(
+        getPredictionMatches().filter(hasOfficialResult).map(getPredictionStageName).filter(Boolean)
+      )];
+      return stageNames.length ? [...stageNames].sort(sortFixtureDateNames).pop() : '';
+    }
+
+    function getRankingLastFechaPoints(lastFecha) {
+      const pointsByPlayer = new Map();
+      if (!lastFecha) return pointsByPlayer;
+      const sourcePredictions = dedupePredictionList(applyPredictionSanctions(rankingPredictions.length ? rankingPredictions : predictions));
+      const lastFechaMatchIds = new Set(
+        getPredictionMatches().filter(match => getPredictionStageName(match) === lastFecha).map(match => match.id)
+      );
+      sourcePredictions
+        .filter(prediction => lastFechaMatchIds.has(Number(prediction.matchId)))
+        .forEach(prediction => {
+          pointsByPlayer.set(prediction.player, (pointsByPlayer.get(prediction.player) || 0) + pointsFor(prediction));
+        });
+      return pointsByPlayer;
+    }
+
     function renderRanking() {
       const totals = getRankingTotals();
+      const lastFecha = getLastFechaWithResults();
+      const lastFechaPoints = getRankingLastFechaPoints(lastFecha);
+      const previousPositionByPlayer = new Map(
+        getRankingTotals(lastFecha).map((row, index) => [row.player, index])
+      );
       const accuracyValues = totals.map(row => row.accuracy);
       const minAccuracy = accuracyValues.length ? Math.min(...accuracyValues) : 0;
       const maxAccuracy = accuracyValues.length ? Math.max(...accuracyValues) : 0;
@@ -5466,6 +5512,15 @@
           ? 0.5
           : (row.accuracy - minAccuracy) / (maxAccuracy - minAccuracy);
         const accuracyHue = Math.round(accuracyRatio * 120);
+        const previousIndex = previousPositionByPlayer.has(row.player) ? previousPositionByPlayer.get(row.player) : null;
+        const movement = previousIndex === null ? 'new' : previousIndex === index ? 'same' : previousIndex > index ? 'up' : 'down';
+        const movementIcon = { up: '▲', down: '▼', same: '—', new: '—' }[movement];
+        const movementTitle = {
+          up: 'Subió posiciones en el ranking',
+          down: 'Bajó posiciones en el ranking',
+          same: 'Se mantuvo en la misma posición',
+          new: 'Sin posición previa'
+        }[movement];
         return `
           <tr>
             <td><span class="rank-medal">${medal}</span></td>
@@ -5473,9 +5528,11 @@
               <span class="ranking-player">
                 ${buildAvatarMarkup(getAvatarForPlayer(row.player), 'ranking-avatar')}
                 <strong>${escapeHtml(row.player)}</strong>
+                <span class="rank-movement rank-${movement}" title="${escapeHtml(movementTitle)}">${movementIcon}</span>
               </span>
             </td>
             <td><span class="points-badge">${row.points}</span></td>
+            <td><span class="points-badge">${lastFechaPoints.get(row.player) || 0}</span></td>
             <td>${row.totalMatches}</td>
             <td>${row.unloadedMatches}</td>
             <td><span class="accuracy-badge" style="background:hsl(${accuracyHue} 68% 40%)" title="Escala relativa del ranking">${row.accuracy}%</span></td>
