@@ -6338,14 +6338,14 @@
       assertTest('cada fecha tiene 15 partidos', Array.from({ length: 16 }, (_, index) =>
         defaultMatches.filter(match => match.group.startsWith(`Fecha ${index + 1} `)).length
       ).every(total => total === 15));
-      assertTest('primeras quince fechas tienen programación oficial', defaultMatches.filter(match => match.date && match.time && match.kickoff).length === 225);
-      assertTest('fechas posteriores esperan programación oficial', defaultMatches.slice(225).every(match => !match.date && !match.time && !match.kickoff));
-      const storedFixtureWithoutFecha15Times = defaultMatches.map(match => match.group.startsWith('Fecha 15 ')
+      assertTest('las 16 fechas tienen programación oficial', defaultMatches.filter(match => match.date && match.time && match.kickoff).length === 240);
+      assertTest('ninguna fecha queda sin programación oficial', defaultMatches.every(match => match.date && match.time && match.kickoff));
+      const storedFixtureWithoutFecha16Times = defaultMatches.map(match => match.group.startsWith('Fecha 16 ')
         ? { ...match, date: '', time: '', timeConfirmed: false, kickoff: '' }
         : match
       );
-      assertTest('fixture guardado incorpora programación oficial nueva', resolveMatchesData(storedFixtureWithoutFecha15Times)
-        .filter(match => match.group.startsWith('Fecha 15 '))
+      assertTest('fixture guardado incorpora programación oficial nueva', resolveMatchesData(storedFixtureWithoutFecha16Times)
+        .filter(match => match.group.startsWith('Fecha 16 '))
         .every(match => match.date && match.time && match.timeConfirmed && match.kickoff));
       assertTest('fallback usa fixture oficial cuando está incompleto', resolveMatchesData(defaultMatches.slice(0, 100)).length === 240);
       assertTest('Fecha 1 incluye Defensa-Aldosivi', defaultMatches.some(match =>
@@ -6356,6 +6356,9 @@
       ).length === 15);
       assertTest('Fecha 15 incluye Boca-River', defaultMatches.some(match =>
         match.group.startsWith('Fecha 15 ') && match.home === 'Boca Juniors' && match.away === 'River Plate'
+      ));
+      assertTest('Fecha 16 incluye Aldosivi-River', defaultMatches.some(match =>
+        match.group.startsWith('Fecha 16 ') && match.home === 'Aldosivi' && match.away === 'River Plate'
       ));
       renderFixture();
       assertTest('fixture renderiza encabezados por fecha', document.getElementById('fixtureBody').innerHTML.includes('fixture-date-row'));

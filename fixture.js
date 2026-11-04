@@ -179,9 +179,8 @@ const FIXTURE_APERTURA_2026 = Object.freeze([
   ]}
 ]);
 
-// Programación oficial publicada por la LPF para las fechas 1 a 15
-// del Torneo Clausura 2026. Las fechas posteriores permanecen pendientes
-// hasta que la Liga confirme día y horario.
+// Programación oficial publicada por la LPF para las fechas 1 a 16
+// del Torneo Clausura 2026 (fase regular completa).
 const PROGRAMACION_CLAUSURA_2026 = Object.freeze({
   'Belgrano|Rosario Central': ['23/07/2026', '19:30'],
   'Sarmiento|Argentinos Juniors': ['23/07/2026', '19:30'],
@@ -421,7 +420,23 @@ const PROGRAMACION_CLAUSURA_2026 = Object.freeze({
   'Lanús|Gimnasia de Mendoza': ['01/11/2026', '20:45'],
   'Platense|Central Córdoba': ['02/11/2026', '19:00'],
   'Atlético Tucumán|Argentinos Juniors': ['02/11/2026', '21:15'],
-  'Independiente Rivadavia|Banfield': ['02/11/2026', '21:15']
+  'Independiente Rivadavia|Banfield': ['02/11/2026', '21:15'],
+
+  'Aldosivi|River Plate': ['05/11/2026', '15:00'],
+  'Gimnasia de La Plata|Belgrano': ['05/11/2026', '19:15'],
+  'Barracas Central|Racing Club': ['06/11/2026', '15:00'],
+  'San Lorenzo|Platense': ['06/11/2026', '19:00'],
+  'Independiente|Deportivo Riestra': ['06/11/2026', '19:00'],
+  'Unión|Vélez Sarsfield': ['06/11/2026', '19:00'],
+  'Tigre|Sarmiento': ['06/11/2026', '22:00'],
+  'Banfield|Atlético Tucumán': ['06/11/2026', '22:00'],
+  'Gimnasia de Mendoza|Independiente Rivadavia': ['07/11/2026', '15:00'],
+  'Talleres|Estudiantes de La Plata': ['07/11/2026', '15:00'],
+  'Argentinos Juniors|Huracán': ['07/11/2026', '17:30'],
+  'Rosario Central|Estudiantes de Río Cuarto': ['07/11/2026', '17:30'],
+  'Boca Juniors|Defensa y Justicia': ['07/11/2026', '17:30'],
+  'Central Córdoba|Lanús': ['08/11/2026', '17:00'],
+  "Instituto|Newell's Old Boys": ['08/11/2026', '19:30']
 });
 
 const FIXTURE_CLAUSURA_2026 = Object.freeze(
